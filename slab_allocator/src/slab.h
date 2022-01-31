@@ -12,6 +12,11 @@ struct mem_slab {
     uint8_t data[];
 };
 
+struct slab_bufctl {
+    struct slab_bufctl* next;
+    uint8_t is_free;
+};
+
 // TODO: check if constructors and destructors are needed for userspace
 struct mem_slab* mem_slab_create(int size, int alignment);
 struct mem_slab* mem_slab_free(struct mem_slab* slab);
