@@ -5,15 +5,27 @@
 
 // TODO: add multi threaded lock stuff
 struct mem_slab {
-    struct mem_slab* next;
+    // Size of the allocations in the cache.
     int size;
+
+    // Alignment requirements in the cache (IGNORED FOR NOW)
     int alignment;
+
+    // Object allocation count
     int ref_count;
-    uint8_t data[];
+
+    // Reference to the first bufctl
+    struct slab_bufctl* freelist_start;
+
+    // Reference to the last bufctl
+    struct slab_bufctl* freelist_end;
 };
 
 struct slab_bufctl {
+    // Next bufctl in the free list
     struct slab_bufctl* next;
+
+    // To note if the buffer is free: 0 if its free and 1 if not.
     uint8_t is_free;
 };
 

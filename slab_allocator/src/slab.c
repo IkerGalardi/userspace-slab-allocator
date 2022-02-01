@@ -27,7 +27,6 @@ struct mem_slab* mem_slab_create(int size, int alignment) {
     if(result == NULL)
         return NULL;
 
-    result->next  = NULL;
     result->size = size;
     result->alignment = alignment;
 
@@ -47,6 +46,10 @@ struct mem_slab* mem_slab_create(int size, int alignment) {
     struct slab_bufctl* bufctl_ptr = (struct slab_bufctl*)ptr;
     bufctl_ptr->is_free = 0;
     bufctl_ptr->next = NULL;
+
+    // Fill the free list members of the cache header.
+    result->freelist_start = (struct slab_bufctl*)(result++);
+    result->freelist_end = bufctl_ptr;
 
     return result;
 }
