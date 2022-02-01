@@ -15,6 +15,14 @@
  *
  */
 
+static void move_first_node_to_end(struct mem_slab* slab) {
+
+}
+
+static void move_node_to_start(struct mem_slab* slab, struct slab_bufctl* node) {
+
+}
+
 struct mem_slab* mem_slab_create(int size, int alignment) {
     assert((size > 0) && "Slab size must be bigger than 0");
 
@@ -67,4 +75,31 @@ void mem_slab_free(struct mem_slab* slab) {
     if(slab->ref_count == 0) {
         munmap((void*)slab, PAGE_SIZE);
     }
+}
+
+void* mem_slab_alloc(struct mem_slab* slab) {
+    // TODO: cache expanding internally of by the user??
+    // No empty buffer in the cache. Return NULL to notify the user.
+    if(slab->freelist_start->is_free != 0) {
+        return NULL;
+    }
+
+    struct slab_bufctl* bufctl = slab->freelist_start;
+    bufctl->is_free = 1;
+
+    move_first_node_to_end(slab);
+
+    return (void*)(bufctl++);
+}
+
+void  mem_slab_dealloc(struct mem_slab* slab, void* ptr) {
+    uint8_t* byte_ptr = (uint8_t*)ptr;
+    struct slab_bufctl* bufctl = (struct slab_bufctl*)(byte_ptr - sizeof(struct slab_bufctl));
+
+    assert((bufctl->is_free != 0) && "Slot already free");
+    bufctl->is_free = 0;
+
+    // TODO: add scrub data to the buffer?
+
+    move_node_to_start(slab, bufctl);
 }

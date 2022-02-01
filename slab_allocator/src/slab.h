@@ -52,4 +52,21 @@ struct mem_slab* mem_slab_create(int size, int alignment);
  */
 void mem_slab_free(struct mem_slab* slab);
 
+/*
+ * Allocate an object in the cache.
+ *
+ * @param slab: slab to allocate the object in
+ *
+ * @return: pointer to the allocated buffer
+ */
+void* mem_slab_alloc(struct mem_slab* slab);
+
+/*
+ * Frees an object in the cache.
+ *
+ * @param slab: slab in which the object is allocated
+ * @param ptr: pointer to the allocated object
+ */
+void  mem_slab_dealloc(struct mem_slab* slab, void* ptr);
+
 #endif // _SLAB_H
