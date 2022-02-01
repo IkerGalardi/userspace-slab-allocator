@@ -36,10 +36,13 @@ struct mem_slab* mem_slab_create(int size, int alignment) {
     uint8_t* ptr = (uint8_t)(result++);
     for(int i = 0; i < num_slots - 1; i++) {
         struct slab_bufctl* bufctl_ptr = (struct slab_bufctl*)ptr;
-        ptr = ptr + sizeof(struct slab_bufctl) + size;
+        uint8_t* next_ptr = ptr + sizeof(struct slab_bufctl) + size;
 
         bufctl_ptr->is_free = 0;
-        bufctl_ptr->next = ptr;
+        bufctl_ptr->next = next_ptr;
+        bufctl_ptr->prev = ptr - sizeof(struct slab_bufctl) - size;
+
+        ptr = next_ptr;
     }
 
     // Last bufctl's next pointer needs to be NULL to indicate the end of the cache page.

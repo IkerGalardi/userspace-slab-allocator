@@ -24,6 +24,9 @@ struct mem_slab {
 struct slab_bufctl {
     // Next bufctl in the free list
     struct slab_bufctl* next;
+    
+    // Previous bufctl in the free list
+    struct slab_bufctl* prev;
 
     // To note if the buffer is free: 0 if its free and 1 if not.
     uint8_t is_free;
