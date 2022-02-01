@@ -16,28 +16,42 @@
  */
 
 struct mem_slab* mem_slab_create(int size, int alignment) {
-    // Small checks before starting
     assert((size > 0) && "Slab size must be bigger than 0");
 
     // TODO: move the slab struct to the end of the buffer.
     // TODO: alignment requirements are ignored right now, dont do that :(
     struct mem_slab* result = mmap(NULL, PAGE_SIZE, PROT_READ | PROT_WRITE, MAP_ANON, -1, 0);
+
+    // If we can't get memory from the kernel we just return NULL to notify the user
+    // something went wrong.
+    if(result == NULL)
+        return NULL;
+
     result->next  = NULL;
     result->size = size;
     result->alignment = alignment;
 
     const int num_slots = (PAGE_SIZE - sizeof(struct mem_slab)) / (sizeof(struct slab_bufctl) + size);
 
-    // Fill all the bufctl structures
-    struct slab_bufctl* bufctl = (struct slab_bufctl*)(result++);
-    for(int i = 0; i < num_slots; i++) {
-        // TODO: Fill all the bufclt linked list items and link them
+    // Fill all the bufctl structures as explained on the memory layout
+    uint8_t* ptr = (uint8_t)(result++);
+    for(int i = 0; i < num_slots - 1; i++) {
+        struct slab_bufctl* bufctl_ptr = (struct slab_bufctl*)ptr;
+        ptr = ptr + sizeof(struct slab_bufctl) + size;
+
+        bufctl_ptr->is_free = 0;
+        bufctl_ptr->next = ptr;
     }
+
+    // Last bufctl's next pointer needs to be NULL to indicate the end of the cache page.
+    struct slab_bufctl* bufctl_ptr = (struct slab_bufctl*)ptr;
+    bufctl_ptr->is_free = 0;
+    bufctl_ptr->next = NULL;
 
     return result;
 }
 
-struct mem_slab* mem_slab_free(struct mem_slab* slab) {
+void mem_slab_free(struct mem_slab* slab) {
     // TODO: assert for slab is free?
     assert((slab->ref_count > 0) && "Use after free of slab");
 

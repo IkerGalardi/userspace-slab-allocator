@@ -18,7 +18,23 @@ struct slab_bufctl {
 };
 
 // TODO: check if constructors and destructors are needed for userspace
+
+/*
+ * Creates a slab cache structure and prepares the page.
+ *
+ * @param size: size of the cache allocations
+ * @param alignment: alignment requirements for allocations in slab cache
+ *
+ * @return: cache structure used for allocations. NULL if can't get memory
+ *          from kernel.
+ */
 struct mem_slab* mem_slab_create(int size, int alignment);
-struct mem_slab* mem_slab_free(struct mem_slab* slab);
+
+/*
+ * Frees the cache page.
+ *
+ * @param slab: slab cache to be freed
+ */
+void mem_slab_free(struct mem_slab* slab);
 
 #endif // _SLAB_H
