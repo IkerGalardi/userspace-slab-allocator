@@ -41,14 +41,14 @@ struct mem_slab* mem_slab_create(int size, int alignment) {
     const int num_slots = (PAGE_SIZE - sizeof(struct mem_slab)) / (sizeof(struct slab_bufctl) + size);
 
     // Fill all the bufctl structures as explained on the memory layout
-    uint8_t* ptr = (uint8_t)(result++);
+    uint8_t* ptr = (uint8_t*)(result++);
     for(int i = 0; i < num_slots - 1; i++) {
         struct slab_bufctl* bufctl_ptr = (struct slab_bufctl*)ptr;
         uint8_t* next_ptr = ptr + sizeof(struct slab_bufctl) + size;
 
         bufctl_ptr->is_free = 0;
-        bufctl_ptr->next = next_ptr;
-        bufctl_ptr->prev = ptr - sizeof(struct slab_bufctl) - size;
+        bufctl_ptr->next = (struct slab_bufctl*)next_ptr;
+        bufctl_ptr->prev = (struct slab_bufctl*)(ptr - sizeof(struct slab_bufctl) - size);
 
         ptr = next_ptr;
     }
