@@ -57,6 +57,7 @@ struct mem_slab* mem_slab_create(int size, int alignment) {
     if(result == NULL)
         return NULL;
 
+    result->ref_count = 0;
     result->size = size;
     result->alignment = alignment;
 
