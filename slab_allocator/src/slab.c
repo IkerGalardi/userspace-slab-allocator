@@ -20,9 +20,11 @@ static void move_first_node_to_end(struct mem_slab* slab) {
     struct slab_bufctl* second = first->next;
     struct slab_bufctl* last = slab->freelist_end;
 
+    // Remove first from the list
     second->prev = NULL;
     slab->freelist_start = second;
 
+    // Add it to as last element
     first->prev = last;
     first->next = NULL;
     last->next = first;
@@ -30,7 +32,17 @@ static void move_first_node_to_end(struct mem_slab* slab) {
 }
 
 static void move_node_to_start(struct mem_slab* slab, struct slab_bufctl* node) {
+    struct slab_bufctl* previous = node->prev;
+    struct slab_bufctl* next = node->next;
 
+    // Remove node from the list
+    previous->next = next;
+    next->prev = previous;
+
+    // Insert the node in the start of the list
+    node->prev = NULL;
+    node->next = slab->freelist_start;
+    slab->freelist_start = node;
 }
 
 struct mem_slab* mem_slab_create(int size, int alignment) {
