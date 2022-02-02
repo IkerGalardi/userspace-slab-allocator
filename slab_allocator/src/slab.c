@@ -16,7 +16,17 @@
  */
 
 static void move_first_node_to_end(struct mem_slab* slab) {
+    struct slab_bufctl* first = slab->freelist_start;
+    struct slab_bufctl* second = first->next;
+    struct slab_bufctl* last = slab->freelist_end;
 
+    second->prev = NULL;
+    slab->freelist_start = second;
+
+    first->prev = last;
+    first->next = NULL;
+    last->next = first;
+    slab->freelist_end = first;
 }
 
 static void move_node_to_start(struct mem_slab* slab, struct slab_bufctl* node) {
