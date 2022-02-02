@@ -88,15 +88,9 @@ struct mem_slab* mem_slab_create(int size, int alignment) {
 }
 
 void mem_slab_free(struct mem_slab* slab) {
-    // TODO: assert for slab is free?
-    assert((slab->ref_count > 0) && "Use after free of slab");
+    assert((slab->ref_count == 0) && "Can't free the slab if objects are allocated");
 
-    // Decrement the reference count and if no longer referenced free 
-    // the memory.
-    slab->ref_count--;
-    if(slab->ref_count == 0) {
-        munmap((void*)slab, PAGE_SIZE);
-    }
+    munmap((void*)slab, PAGE_SIZE);
 }
 
 void* mem_slab_alloc(struct mem_slab* slab) {
@@ -111,6 +105,8 @@ void* mem_slab_alloc(struct mem_slab* slab) {
 
     move_first_node_to_end(slab);
 
+    slab->ref_count++;
+
     return (void*)(bufctl++);
 }
 
@@ -124,4 +120,8 @@ void  mem_slab_dealloc(struct mem_slab* slab, void* ptr) {
     // TODO: add scrub data to the buffer?
 
     move_node_to_start(slab, bufctl);
+
+    slab->ref_count--;
+
+    assert((slab->ref_count >= 0) && "Reference counting can't go bellow 0!");
 }
