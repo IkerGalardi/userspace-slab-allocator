@@ -2,6 +2,7 @@
 
 #include <stddef.h>
 #include <assert.h>
+#include <stdio.h>
 
 #include <sys/mman.h>
 
@@ -50,7 +51,11 @@ struct mem_slab* mem_slab_create(int size, int alignment) {
 
     // TODO: move the slab struct to the end of the buffer.
     // TODO: alignment requirements are ignored right now, dont do that :(
-    struct mem_slab* result = mmap(NULL, PAGE_SIZE, PROT_READ | PROT_WRITE, MAP_ANON, -1, 0);
+    struct mem_slab* result = (struct mem_slab*)mmap(NULL, PAGE_SIZE, PROT_READ | PROT_WRITE, MAP_ANON, -1, 0);
+    fprintf(stderr, "SLAB: allocated page\n");
+    fprintf(stderr, "      ptr   = %p\n", result);
+    fprintf(stderr, "      size  = %i\n", size);
+    fprintf(stderr, "      align = %i\n", alignment);
 
     // If we can't get memory from the kernel we just return NULL to notify the user
     // something went wrong.
@@ -92,12 +97,15 @@ void mem_slab_free(struct mem_slab* slab) {
     assert((slab->ref_count == 0) && "Can't free the slab if objects are allocated");
 
     munmap((void*)slab, PAGE_SIZE);
+
+    fprintf(stderr, "SLAB: freed page at %p\n", slab);
 }
 
 void* mem_slab_alloc(struct mem_slab* slab) {
     // TODO: cache expanding internally of by the user??
     // No empty buffer in the cache. Return NULL to notify the user.
     if(slab->freelist_start->is_free != 0) {
+        fprintf("SLAB: allocation failed because cache is full\n");
         return NULL;
     }
 
