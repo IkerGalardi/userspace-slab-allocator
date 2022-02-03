@@ -6,7 +6,11 @@ project "slabtests"
     objdir "bin/"
 
     files { "src/**.c", "src/**.h" }
-    includedirs { "src/" }
+    includedirs { "src/", "../slab_allocator/src"}
+
+    libdirs {"../slab_allocator/"}
+
+    links {"slaballocator"}
 
     filter "configurations:Debug"
         symbols "on"

@@ -32,7 +32,7 @@ ifneq (,$(slaballocator_config))
 	@${MAKE} --no-print-directory -C slab_allocator -f Makefile config=$(slaballocator_config)
 endif
 
-slabtests:
+slabtests: slaballocator
 ifneq (,$(slabtests_config))
 	@echo "==== Building slabtests ($(slabtests_config)) ===="
 	@${MAKE} --no-print-directory -C slab_tests -f Makefile config=$(slabtests_config)
