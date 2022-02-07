@@ -47,6 +47,15 @@ static void move_node_to_start(struct mem_slab* slab, struct slab_bufctl* node) 
     slab->freelist_start = node;
 }
 
+static int is_ptr_in_page(void* page, void* ptr, size_t ptr_size) {
+    uint8_t* byte_page_ptr = (uint8_t*)page;
+    uint8_t* byte_page_end_ptr = (uint8_t*)page + PAGE_SIZE;
+    uint8_t* byte_ptr = (uint8_t*)ptr;
+    uint8_t* byte_ptr_end = byte_ptr + ptr_size;
+
+    return byte_ptr_end < byte_page_end_ptr;
+}
+
 struct mem_slab* mem_slab_create(int size, int alignment) {
     assert((size > 0) && "Slab size must be bigger than 0");
 
@@ -70,29 +79,31 @@ struct mem_slab* mem_slab_create(int size, int alignment) {
     result->size = size;
     result->alignment = alignment;
 
-    const int num_slots = (PAGE_SIZE - sizeof(struct mem_slab)) / (sizeof(struct slab_bufctl) + size);
-
-    // Fill all the bufctl structures as explained on the memory layout
+    // Fill all the bufctl structures
+    int i = 0;
     uint8_t* ptr = (uint8_t*)(result++);
-    for(int i = 0; i < num_slots - 1; i++) {
-        struct slab_bufctl* bufctl_ptr = (struct slab_bufctl*)ptr;
-        uint8_t* next_ptr = ptr + sizeof(struct slab_bufctl) + size;
+    struct slab_bufctl* last = NULL;
+    struct slab_bufctl* current = (struct slab_bufctl*)ptr;
+    struct slab_bufctl* next = (struct slab_bufctl*)(ptr + sizeof(struct slab_bufctl) + size);
+    while(is_ptr_in_page(result, current, sizeof(struct slab_bufctl) + size)) {
+        current->prev = last;
+        current->next = next;
+        current->is_free = 0;
 
-        bufctl_ptr->is_free = 0;
-        bufctl_ptr->next = (struct slab_bufctl*)next_ptr;
-        bufctl_ptr->prev = (struct slab_bufctl*)(ptr - sizeof(struct slab_bufctl) - size);
-
-        ptr = next_ptr;
+        // Advance the pointers
+        ptr = (void*)next;
+        last = current;
+        current = next;
+        next = (struct slab_bufctl*)(ptr + sizeof(struct slab_bufctl) + size);
+        i++;
     }
-
-    // Last bufctl's next pointer needs to be NULL to indicate the end of the cache page.
-    struct slab_bufctl* bufctl_ptr = (struct slab_bufctl*)ptr;
-    bufctl_ptr->is_free = 0;
-    bufctl_ptr->next = NULL;
+    next->prev = current;
+    next->next = NULL;
+    next->is_free = 0;
 
     // Fill the free list members of the cache header.
     result->freelist_start = (struct slab_bufctl*)(result++);
-    result->freelist_end = bufctl_ptr;
+    result->freelist_end = next;
 
     return result;
 }
