@@ -3,6 +3,7 @@
 #include <stddef.h>
 #include <assert.h>
 #include <stdio.h>
+#include <errno.h>
 
 #include <sys/mman.h>
 
@@ -51,16 +52,19 @@ struct mem_slab* mem_slab_create(int size, int alignment) {
 
     // TODO: move the slab struct to the end of the buffer.
     // TODO: alignment requirements are ignored right now, dont do that :(
-    struct mem_slab* result = (struct mem_slab*)mmap(NULL, PAGE_SIZE, PROT_READ | PROT_WRITE, MAP_ANON, -1, 0);
+    // NOTE: important that MAP_PRIVATE or MAP_SHARED is added as flag.
+    struct mem_slab* result = (struct mem_slab*)mmap(NULL, PAGE_SIZE, PROT_READ | PROT_WRITE, MAP_ANONYMOUS | MAP_PRIVATE, -1, 0);
+    fprintf(stderr, "Page size %i\n", PAGE_SIZE);
     fprintf(stderr, "SLAB: allocated page\n");
     fprintf(stderr, "      ptr   = %p\n", result);
     fprintf(stderr, "      size  = %i\n", size);
     fprintf(stderr, "      align = %i\n", alignment);
-
-    // If we can't get memory from the kernel we just return NULL to notify the user
-    // something went wrong.
-    if(result == NULL)
+    
+    // Linux returns -1 as address when no memory is mapped. If that happens return NULL and user should take care of that.
+    if(result == (void*)-1) {
+        perror("mmap");
         return NULL;
+    }
 
     result->ref_count = 0;
     result->size = size;
@@ -105,7 +109,7 @@ void* mem_slab_alloc(struct mem_slab* slab) {
     // TODO: cache expanding internally of by the user??
     // No empty buffer in the cache. Return NULL to notify the user.
     if(slab->freelist_start->is_free != 0) {
-        fprintf("SLAB: allocation failed because cache is full\n");
+        fprintf(stderr, "SLAB: allocation failed because cache is full\n");
         return NULL;
     }
 
