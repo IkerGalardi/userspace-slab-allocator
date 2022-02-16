@@ -15,21 +15,13 @@ struct mem_slab {
     int ref_count;
 
     // Reference to the first bufctl
-    struct slab_bufctl* freelist_start;
-
-    // Reference to the last bufctl
-    struct slab_bufctl* freelist_end;
-};
-
-struct slab_bufctl {
-    // Next bufctl in the free list
-    struct slab_bufctl* next;
+    uint16_t freelist_start_index;
     
-    // Previous bufctl in the free list
-    struct slab_bufctl* prev;
+    // Reference to the last bufctl
+    uint16_t freelist_end_index;
 
-    // To note if the buffer is free: 0 if its free and 1 if not.
-    uint8_t is_free;
+    void* freelist_buffer;
+    void* allocable_buffer;
 };
 
 // TODO: check if constructors and destructors are needed for userspace
