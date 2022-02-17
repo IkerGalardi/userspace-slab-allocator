@@ -89,7 +89,26 @@ void mem_slab_free(struct mem_slab* slab) {
 }
 
 void* mem_slab_alloc(struct mem_slab* slab) {
-    debug("ALLOCATION NOT IMPLEMENTED YET\n");
+    struct slab_bufctl* freelist_array = (struct slab_bufctl*)(slab->freelist_buffer);
+    int free_index = slab->freelist_start_index;
+
+    // If the first node of the freelist is not free then all the buffers have been allocated.
+    if(freelist_array[free_index].is_free != 0) {
+        debug("SLAB: can't allocate on this cache\n");
+        return NULL;
+    }
+
+    // TODO: how do we define NULL???? what a great question
+    // When the buffer gets allocated, the freelist node is moved to the end, this way
+    // for checking if there is any available buffer we just need to check the first node
+    // of the free list.
+    int free_next = freelist_array[free_index].next_index;
+    freelist_array[slab->freelist_end_index].next_index = free_index;
+    freelist_array[free_index].prev_index = slab->freelist_end_index;
+    freelist_array[free_index].next_index = -1;
+    freelist_array[free_next].prev_index = -1;
+    slab->freelist_start_index = freelist_array[free_index].next_index;
+    slab->freelist_end_index = free_index;
 }
 
 void  mem_slab_dealloc(struct mem_slab* slab, void* ptr) {
