@@ -45,22 +45,25 @@ struct mem_slab* mem_slab_create(int size, int alignment) {
 
     // NOTE: important that MAP_PRIVATE or MAP_SHARED is added as flag or no valid memory is going to be returned by the kernel.
     struct mem_slab* result = (struct mem_slab*)mmap(NULL, PAGE_SIZE, PROT_READ | PROT_WRITE, MAP_ANONYMOUS | MAP_PRIVATE, -1, 0);
+    debug("SLAB: got pointer %p from kernel\n", result);
     
     // Linux returns -1 as address when no memory is mapped. If that happens return NULL and user should take care of that.
     if(result == (void*)-1) {
-        debug("Could not get memory from the kernel\n");
+        debug("SLAB: could not get memory from the kernel\n");
         return NULL;
     }
 
     result->ref_count = 0;
     result->size = size;
     result->alignment = alignment;
-    result->freelist_buffer = (struct slab_bufctl*)(result++);
+    result->freelist_buffer = (struct slab_bufctl*)(result + 1);
+
+    debug("SLAB: freelist buffer at %p\n", result->freelist_buffer);
 
     // Taking into account the next relation, we can calculate the number of buffers that can be saved on a page:
     //          sizeof(mem_slab) + num_buffers * (buff_size * sizeof(bufctl)) = PAGE_SIZE
     int num_buffers = (PAGE_SIZE - sizeof(struct mem_slab))/(size * sizeof(struct slab_bufctl));
-    debug("%i allocations available on this cache\n", num_buffers);
+    debug("SLAB: %i allocations available on this cache\n", num_buffers);
 
     // Link all the free list
     struct slab_bufctl* freelist_buffer = (struct slab_bufctl*)result->freelist_buffer;
@@ -75,6 +78,10 @@ struct mem_slab* mem_slab_create(int size, int alignment) {
     // TODO: take into account alignment pls
     // TODO: non allocated pattern or something should be added
     result->allocable_buffer = result->freelist_buffer + num_buffers;
+
+    debug("SLAB: slots start at %p\n", result->allocable_buffer);
+
+    debug("SLAB: page ends at %p\n", ((uint8_t*)(result) + PAGE_SIZE));
 
     return result;
 }
