@@ -10,9 +10,10 @@
 
 #define PAGE_SIZE 4 * 1024
 
-#define DEBUG
+#define SLAB_CONFIG_DEBUG
+#define SLAB_CONFIG_DEBUG_FREELIST
 
-#ifdef DEBUG
+#ifdef SLAB_CONFIG_DEBUG
     #define debug(...) fprintf(stderr, __VA_ARGS__)
 #else
     #define debug(...)
@@ -35,6 +36,24 @@ struct slab_bufctl {
     uint8_t is_free;
 } __attribute__((packed));
 
+static void print_freelist_if_enabled(struct mem_slab* slab) {
+#ifdef SLAB_CONFIG_DEBUG_FREELIST
+    debug("\t * Freelist state:\n");
+
+    struct slab_bufctl* bufctl_array = (struct slab_bufctl*)(slab->freelist_buffer);
+
+    int current_index = slab->freelist_start_index;
+    while(bufctl_array[current_index].next_index != -1) {
+        struct slab_bufctl current_node = bufctl_array[current_index];
+        debug("\t\t * Node %i, previous = %i, next = %i\n", current_index, current_node.prev_index, current_node.next_index);
+        current_index = current_node.next_index;
+    }
+
+    struct slab_bufctl current_node = bufctl_array[current_index];
+    debug("\t\t * Node %i, previous = %i, next = %i, free = %i\n", current_index, current_node.prev_index, current_node.next_index);
+#endif // SLAB_CONFIG_DEBUG_FREELIST
+}
+
 struct mem_slab* mem_slab_create(int size, int alignment) {
     debug("sizeof(header) = %i\n", sizeof(struct mem_slab));
     debug("sizeof(bufctl) = %i\n", sizeof(struct slab_bufctl));
@@ -43,35 +62,44 @@ struct mem_slab* mem_slab_create(int size, int alignment) {
     assert((size > 0) && "Slab size must be bigger than 0");
     assert((alignment >= 0) && "Alignment must be bigger than 0");
 
+    debug("SLAB: creating new cache...\n");
     // NOTE: important that MAP_PRIVATE or MAP_SHARED is added as flag or no valid memory is going to be returned by the kernel.
     struct mem_slab* result = (struct mem_slab*)mmap(NULL, PAGE_SIZE, PROT_READ | PROT_WRITE, MAP_ANONYMOUS | MAP_PRIVATE, -1, 0);
-    debug("SLAB: got pointer %p from kernel\n", result);
     
     // Linux returns -1 as address when no memory is mapped. If that happens return NULL and user should take care of that.
     if(result == (void*)-1) {
-        debug("SLAB: could not get memory from the kernel\n");
+        debug("\t Could not get memory from the kernel\n");
         return NULL;
     }
+
+    debug("\t * Got pointer %p from kernel\n", result);
 
     result->ref_count = 0;
     result->size = size;
     result->alignment = alignment;
     result->freelist_buffer = (struct slab_bufctl*)(result + 1);
 
-    debug("SLAB: freelist buffer at %p\n", result->freelist_buffer);
+    debug("\t * Freelist buffer at %p\n", result->freelist_buffer);
 
     // Taking into account the next relation, we can calculate the number of buffers that can be saved on a page:
     //          sizeof(mem_slab) + num_buffers * (buff_size * sizeof(bufctl)) = PAGE_SIZE
     int num_buffers = (PAGE_SIZE - sizeof(struct mem_slab))/(size * sizeof(struct slab_bufctl));
-    debug("SLAB: %i allocations available on this cache\n", num_buffers);
+    debug("\t * %i allocations available on this cache\n", num_buffers);
 
+    debug("\t * Generating freelist...\n");
     // Link all the free list
     struct slab_bufctl* freelist_buffer = (struct slab_bufctl*)result->freelist_buffer;
     for(int i = 0; i < num_buffers; i++) {
         freelist_buffer[i].prev_index = i - 1;
         freelist_buffer[i].next_index = i + 1;
         freelist_buffer[i].is_free = 0;
+
+        debug("\t\t * Node %i, prev %i, next %i\n", i,
+                                                   freelist_buffer[i].prev_index, 
+                                                   freelist_buffer[i].next_index);
     }
+    freelist_buffer[result->freelist_end_index].next_index = -1;
+
     result->freelist_start_index = 0;
     result->freelist_end_index = num_buffers - 1;
 
@@ -79,9 +107,11 @@ struct mem_slab* mem_slab_create(int size, int alignment) {
     // TODO: non allocated pattern or something should be added
     result->allocable_buffer = result->freelist_buffer + num_buffers;
 
-    debug("SLAB: slots start at %p\n", result->allocable_buffer);
+    debug("\t * Slots start at %p\n", result->allocable_buffer);
 
-    debug("SLAB: page ends at %p\n", ((uint8_t*)(result) + PAGE_SIZE));
+    debug("\t * Page ends at %p\n", ((uint8_t*)(result) + PAGE_SIZE));
+
+    print_freelist_if_enabled(result);
 
     return result;
 }
@@ -96,18 +126,21 @@ void mem_slab_free(struct mem_slab* slab) {
 }
 
 void* mem_slab_alloc(struct mem_slab* slab) {
+    debug("SLAB: allocation of size %i on cache %p\n", slab->size, slab);
+
     struct slab_bufctl* freelist_array = (struct slab_bufctl*)(slab->freelist_buffer);
     int free_index = slab->freelist_start_index;
+    debug("\t * Freelist start index is %i\n", free_index);
 
     // If the first node of the freelist is not free then all the buffers have been allocated.
     if(freelist_array[free_index].is_free != 0) {
-        debug("SLAB: can't allocate on this cache\n");
+        debug("\t * Can't allocate on this cache\n");
         return NULL;
     }
     
     int free_next = freelist_array[free_index].next_index;
-    debug("SLAB: index %i was found free\n", free_index);
-    debug("SLAB: index %i is new first\n", free_next);
+    debug("\t * Index %i was found free\n", free_index);
+    debug("\t * Index %i is new first\n", free_next);
 
     // TODO: how do we define NULL???? what a great question
     // When the buffer gets allocated, the freelist node is moved to the end, this way
@@ -119,6 +152,8 @@ void* mem_slab_alloc(struct mem_slab* slab) {
     freelist_array[free_next].prev_index = -1;
     slab->freelist_start_index = freelist_array[free_index].next_index;
     slab->freelist_end_index = free_index;
+
+    print_freelist_if_enabled(slab);
 
     return slab->allocable_buffer + slab->size * free_index;
 }
