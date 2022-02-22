@@ -27,6 +27,7 @@
  *
  */
 
+// TODO: is packed okay???
 struct slab_bufctl {
     // Linked list stuff
     uint16_t next_index;
@@ -42,6 +43,9 @@ static void print_freelist_if_enabled(struct mem_slab* slab) {
 
     struct slab_bufctl* bufctl_array = (struct slab_bufctl*)(slab->freelist_buffer);
 
+    debug("\t\t * Node %i is the first in the list\n", slab->freelist_start_index);
+    debug("\t\t * Node %i is the last in the list\n", slab->freelist_end_index);
+    debug("\t\t * First node pointer %p\n", &(bufctl_array[slab->freelist_start_index]));
     int current_index = slab->freelist_start_index;
     while(bufctl_array[current_index].next_index != -1) {
         struct slab_bufctl current_node = bufctl_array[current_index];
@@ -93,15 +97,10 @@ struct mem_slab* mem_slab_create(int size, int alignment) {
         freelist_buffer[i].prev_index = i - 1;
         freelist_buffer[i].next_index = i + 1;
         freelist_buffer[i].is_free = 0;
-
-        debug("\t\t * Node %i, prev %i, next %i\n", i,
-                                                   freelist_buffer[i].prev_index, 
-                                                   freelist_buffer[i].next_index);
     }
-    freelist_buffer[result->freelist_end_index].next_index = -1;
-
     result->freelist_start_index = 0;
     result->freelist_end_index = num_buffers - 1;
+    freelist_buffer[result->freelist_end_index].next_index = -1;
 
     // TODO: take into account alignment pls
     // TODO: non allocated pattern or something should be added
