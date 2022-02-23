@@ -176,6 +176,8 @@ void mem_slab_dealloc(struct mem_slab* slab, void* ptr) {
     struct slab_bufctl* tofree      = &(freelist_array[slot_index + 0]);
     struct slab_bufctl* tofree_next = &(freelist_array[slot_index + 1]);
 
+    debug("SLAB: deallocating slot %i", slot_index);
+
     // Mark the node as free
     tofree->is_free = SLOT_FREE; 
 
@@ -186,11 +188,12 @@ void mem_slab_dealloc(struct mem_slab* slab, void* ptr) {
 
     // NOTE: probably when moving the end node it wont work :(
     // Move the node of the slot to the start of the freelist.
-    tofree_prev->next_index = slot_index + 1;
-    tofree_next->prev_index = slot_index - 1;
+    tofree_prev->next_index = tofree->next_index;
+    tofree_next->prev_index = tofree->prev_index;
     tofree->next_index = slab->freelist_start_index;
     tofree->prev_index = NON_EXISTANT;
     slab->freelist_start_index = slot_index;
-    slab->freelist_end_index = slot_index;
-        
+    slab->freelist_end_index = tofree_prev->next_index;
+
+    debug("SLAB: deallocating slot %i", slot_index);
 }
