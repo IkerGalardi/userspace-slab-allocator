@@ -15,6 +15,9 @@
 
 #define NON_EXISTANT (uint16_t)(-1)
 
+#define SLOT_FREE 0
+#define SLOT_BUSY 1
+
 #ifdef SLAB_CONFIG_DEBUG
     #define debug(...) fprintf(stderr, __VA_ARGS__)
 #else
@@ -38,6 +41,10 @@ struct slab_bufctl {
     // To note if the buffer is free: 0 if its free and 1 if not.
     uint8_t is_free;
 } __attribute__((packed));
+
+static uint16_t get_buffer_index_from_ptr(void* ptr) {
+    return 0;
+}
 
 static void print_freelist_if_enabled(struct mem_slab* slab) {
 #ifdef SLAB_CONFIG_DEBUG_FREELIST
@@ -98,7 +105,7 @@ struct mem_slab* mem_slab_create(int size, int alignment) {
     for(int i = 0; i < num_buffers; i++) {
         freelist_buffer[i].prev_index = i - 1;
         freelist_buffer[i].next_index = i + 1;
-        freelist_buffer[i].is_free = 0;
+        freelist_buffer[i].is_free = SLOT_FREE;
     }
     result->freelist_start_index = 0;
     result->freelist_end_index = num_buffers - 1;
@@ -134,7 +141,7 @@ void* mem_slab_alloc(struct mem_slab* slab) {
     debug("\t * Freelist start index is %i\n", free_index);
 
     // If the first node of the freelist is not free then all the buffers have been allocated.
-    if(freelist_array[free_index].is_free != 0) {
+    if(freelist_array[free_index].is_free != SLOT_FREE) {
         debug("\t * Can't allocate on this cache\n");
         return NULL;
     }
@@ -153,6 +160,9 @@ void* mem_slab_alloc(struct mem_slab* slab) {
     freelist_array[free_index].next_index = NON_EXISTANT;
     slab->freelist_end_index = free_index;
 
+    // Important to mark it as busy.
+    freelist_array[free_index].is_free = SLOT_BUSY;
+
     print_freelist_if_enabled(slab);
 
     return slab->allocable_buffer + slab->size * free_index;
@@ -160,4 +170,8 @@ void* mem_slab_alloc(struct mem_slab* slab) {
 
 void  mem_slab_dealloc(struct mem_slab* slab, void* ptr) {
     debug("DEALLOCATION NOT IMPLEMENTED YET\n");
+
+    uint16_t slot_index = get_buffer_index_from_ptr(ptr);
+
+    slab->freelist_buffer[slot_index].is_free = SLOT_FREE; 
 }
