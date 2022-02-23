@@ -11,7 +11,9 @@
 #define PAGE_SIZE 4 * 1024
 
 #define SLAB_CONFIG_DEBUG
-#define SLAB_CONFIG_DEBUG_FREELIST
+//#define SLAB_CONFIG_DEBUG_FREELIST
+
+#define NON_EXISTANT (uint16_t)(-1)
 
 #ifdef SLAB_CONFIG_DEBUG
     #define debug(...) fprintf(stderr, __VA_ARGS__)
@@ -47,7 +49,7 @@ static void print_freelist_if_enabled(struct mem_slab* slab) {
     debug("\t\t * Node %i is the last in the list\n", slab->freelist_end_index);
     debug("\t\t * First node pointer %p\n", &(bufctl_array[slab->freelist_start_index]));
     int current_index = slab->freelist_start_index;
-    while(bufctl_array[current_index].next_index != -1) {
+    while(bufctl_array[current_index].next_index != NON_EXISTANT) {
         struct slab_bufctl current_node = bufctl_array[current_index];
         debug("\t\t * Node %i, previous = %i, next = %i\n", current_index, current_node.prev_index, current_node.next_index);
         current_index = current_node.next_index;
@@ -100,7 +102,7 @@ struct mem_slab* mem_slab_create(int size, int alignment) {
     }
     result->freelist_start_index = 0;
     result->freelist_end_index = num_buffers - 1;
-    freelist_buffer[result->freelist_end_index].next_index = -1;
+    freelist_buffer[result->freelist_end_index].next_index = NON_EXISTANT;
 
     // TODO: take into account alignment pls
     // TODO: non allocated pattern or something should be added
@@ -141,15 +143,14 @@ void* mem_slab_alloc(struct mem_slab* slab) {
     debug("\t * Index %i was found free\n", free_index);
     debug("\t * Index %i is new first\n", free_next);
 
-    // TODO: how do we define NULL???? what a great question
     // When the buffer gets allocated, the freelist node is moved to the end, this way
     // for checking if there is any available buffer we just need to check the first node
     // of the free list.
     freelist_array[slab->freelist_end_index].next_index = free_index;
     freelist_array[free_index].prev_index = slab->freelist_end_index;
-    freelist_array[free_index].next_index = -1;
-    freelist_array[free_next].prev_index = -1;
+    freelist_array[free_next].prev_index = NON_EXISTANT;
     slab->freelist_start_index = freelist_array[free_index].next_index;
+    freelist_array[free_index].next_index = NON_EXISTANT;
     slab->freelist_end_index = free_index;
 
     print_freelist_if_enabled(slab);
