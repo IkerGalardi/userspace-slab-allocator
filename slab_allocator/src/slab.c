@@ -43,7 +43,13 @@ struct slab_bufctl {
 } __attribute__((packed));
 
 static uint16_t get_buffer_index_from_ptr(struct mem_slab* slab, void* ptr) {
-    return ptr - slab->allocable_buffer - slab->size;
+    // If the pointer is calculated with the next formula, the index should be calculated like the return statement.
+    //      ptr = allocable_buffer + slab->size * index;
+    //                        |
+    //                        v
+    //      index = (ptr - allocable_buffer) / (slab->size)
+
+    return (ptr - slab->allocable_buffer) / (slab->size);
 }
 
 static void print_freelist_if_enabled(struct mem_slab* slab) {
@@ -134,6 +140,7 @@ void mem_slab_free(struct mem_slab* slab) {
 }
 
 void* mem_slab_alloc(struct mem_slab* slab) {
+    assert((slab != NULL) && "Slab should be a valid pointer");
     debug("SLAB: allocation of size %i on cache %p\n", slab->size, slab);
 
     struct slab_bufctl* freelist_array = (struct slab_bufctl*)(slab->freelist_buffer);
@@ -172,9 +179,9 @@ void* mem_slab_alloc(struct mem_slab* slab) {
 void mem_slab_dealloc(struct mem_slab* slab, void* ptr) {
     struct slab_bufctl* freelist_array = (struct slab_bufctl*)(slab->freelist_buffer);
     uint16_t slot_index = get_buffer_index_from_ptr(slab, ptr);
-    struct slab_bufctl* tofree_prev = &(freelist_array[slot_index - 1]);
     struct slab_bufctl* tofree      = &(freelist_array[slot_index + 0]);
-    struct slab_bufctl* tofree_next = &(freelist_array[slot_index + 1]);
+    struct slab_bufctl* tofree_prev = &(freelist_array[tofree->prev_index]);
+    struct slab_bufctl* tofree_next = &(freelist_array[tofree->next_index]);
 
     debug("SLAB: deallocating slot %i on cache %p\n", slot_index, slab);
 
