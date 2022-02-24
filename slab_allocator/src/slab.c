@@ -5,6 +5,7 @@
 #include <assert.h>
 #include <stdio.h>
 #include <errno.h>
+#include <stdbool.h>
 
 #include <sys/mman.h>
 
@@ -50,6 +51,11 @@ static uint16_t get_buffer_index_from_ptr(struct mem_slab* slab, void* ptr) {
     //      index = (ptr - allocable_buffer) / (slab->size)
 
     return (ptr - slab->allocable_buffer) / (slab->size);
+}
+
+static bool is_ptr_in_page(const void* page, const void* ptr) {
+    const void* page_end   = (const void*)((const uint8_t*)page + PAGE_SIZE);
+    return (ptr > page) && (page_end > ptr);
 }
 
 static void print_freelist_if_enabled(struct mem_slab* slab) {
@@ -140,7 +146,9 @@ void mem_slab_free(struct mem_slab* slab) {
 }
 
 void* mem_slab_alloc(struct mem_slab* slab) {
+    // Basic sanity checks
     assert((slab != NULL) && "Slab should be a valid pointer");
+
     debug("SLAB: allocation of size %i on cache %p\n", slab->size, slab);
 
     struct slab_bufctl* freelist_array = (struct slab_bufctl*)(slab->freelist_buffer);
@@ -172,11 +180,18 @@ void* mem_slab_alloc(struct mem_slab* slab) {
 
     print_freelist_if_enabled(slab);
 
-    return slab->allocable_buffer + slab->size * free_index;
+    void* to_return = slab->allocable_buffer + slab->size * free_index;
+    assert((is_ptr_in_page(slab, to_return)) && "Allocation pointer not inside the page cache");
+
+    return to_return;
 }
 
 // TODO: fill with non allocated pattern 
 void mem_slab_dealloc(struct mem_slab* slab, void* ptr) {
+    // Basic sanity checks before beginning any work
+    assert((slab != NULL) && "Slab should be a valid ptr");
+    assert((is_ptr_in_page(slab, ptr)) && "Pointer was not allocated by this cache");
+
     struct slab_bufctl* freelist_array = (struct slab_bufctl*)(slab->freelist_buffer);
     uint16_t slot_index = get_buffer_index_from_ptr(slab, ptr);
     struct slab_bufctl* first       = &(freelist_array[slab->freelist_start_index]);
@@ -185,6 +200,9 @@ void mem_slab_dealloc(struct mem_slab* slab, void* ptr) {
     struct slab_bufctl* tofree_next = &(freelist_array[tofree->next_index]);
 
     debug("SLAB: deallocating slot %i on cache %p\n", slot_index, slab);
+
+    // Check for double free
+    assert((tofree->is_free == SLOT_BUSY) && "Passed pointer has never been allocated or already free");
 
     // Mark the node as free
     tofree->is_free = SLOT_FREE; 
