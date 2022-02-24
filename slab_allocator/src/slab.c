@@ -179,6 +179,7 @@ void* mem_slab_alloc(struct mem_slab* slab) {
 void mem_slab_dealloc(struct mem_slab* slab, void* ptr) {
     struct slab_bufctl* freelist_array = (struct slab_bufctl*)(slab->freelist_buffer);
     uint16_t slot_index = get_buffer_index_from_ptr(slab, ptr);
+    struct slab_bufctl* first       = &(freelist_array[slab->freelist_start_index]);
     struct slab_bufctl* tofree      = &(freelist_array[slot_index + 0]);
     struct slab_bufctl* tofree_prev = &(freelist_array[tofree->prev_index]);
     struct slab_bufctl* tofree_next = &(freelist_array[tofree->next_index]);
@@ -199,6 +200,7 @@ void mem_slab_dealloc(struct mem_slab* slab, void* ptr) {
     tofree_next->prev_index = tofree->prev_index;
     tofree->next_index = slab->freelist_start_index;
     tofree->prev_index = NON_EXISTANT;
+    first->prev_index = slot_index;
     slab->freelist_start_index = slot_index;
     slab->freelist_end_index = tofree_prev->next_index;
 
