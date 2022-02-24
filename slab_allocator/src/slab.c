@@ -11,7 +11,7 @@
 #define PAGE_SIZE 4 * 1024
 
 #define SLAB_CONFIG_DEBUG
-//#define SLAB_CONFIG_DEBUG_FREELIST
+#define SLAB_CONFIG_DEBUG_FREELIST
 
 #define NON_EXISTANT (uint16_t)(-1)
 
@@ -42,8 +42,8 @@ struct slab_bufctl {
     uint8_t is_free;
 } __attribute__((packed));
 
-static uint16_t get_buffer_index_from_ptr(void* ptr) {
-    return 0;
+static uint16_t get_buffer_index_from_ptr(struct mem_slab* slab, void* ptr) {
+    return ptr - slab->allocable_buffer - slab->size;
 }
 
 static void print_freelist_if_enabled(struct mem_slab* slab) {
@@ -171,12 +171,12 @@ void* mem_slab_alloc(struct mem_slab* slab) {
 // TODO: fill with non allocated pattern 
 void mem_slab_dealloc(struct mem_slab* slab, void* ptr) {
     struct slab_bufctl* freelist_array = (struct slab_bufctl*)(slab->freelist_buffer);
-    uint16_t slot_index = get_buffer_index_from_ptr(ptr);
+    uint16_t slot_index = get_buffer_index_from_ptr(slab, ptr);
     struct slab_bufctl* tofree_prev = &(freelist_array[slot_index - 1]);
     struct slab_bufctl* tofree      = &(freelist_array[slot_index + 0]);
     struct slab_bufctl* tofree_next = &(freelist_array[slot_index + 1]);
 
-    debug("SLAB: deallocating slot %i", slot_index);
+    debug("SLAB: deallocating slot %i on cache %p\n", slot_index, slab);
 
     // Mark the node as free
     tofree->is_free = SLOT_FREE; 
@@ -195,5 +195,8 @@ void mem_slab_dealloc(struct mem_slab* slab, void* ptr) {
     slab->freelist_start_index = slot_index;
     slab->freelist_end_index = tofree_prev->next_index;
 
-    debug("SLAB: deallocating slot %i", slot_index);
+    debug("\t * New first in the freelist %i\n", slab->freelist_start_index);
+    debug("\t * New last in the freelist %i\n", slab->freelist_end_index);
+
+    print_freelist_if_enabled(slab);
 }
