@@ -160,6 +160,9 @@ void* mem_slab_alloc(struct mem_slab* slab) {
         debug("\t * Can't allocate on this cache\n");
         return NULL;
     }
+
+    // Increment the reference count
+    slab->ref_count++;
     
     int free_next = freelist_array[free_index].next_index;
     debug("\t * Index %i was found free\n", free_index);
@@ -203,6 +206,9 @@ void mem_slab_dealloc(struct mem_slab* slab, void* ptr) {
 
     // Check for double free
     assert((tofree->is_free == SLOT_BUSY) && "Passed pointer has never been allocated or already free");
+    
+    // Decrement the reference count
+    slab->ref_count--;
 
     // Mark the node as free
     tofree->is_free = SLOT_FREE; 
@@ -212,6 +218,8 @@ void mem_slab_dealloc(struct mem_slab* slab, void* ptr) {
         return;
     }
 
+    debug("\t * To free slot: prev = %i, next = %i\n", tofree->prev_index, tofree->next_index);
+
     // NOTE: probably when moving the end node it wont work :(
     // Move the node of the slot to the start of the freelist.
     tofree_prev->next_index = tofree->next_index;
@@ -220,7 +228,7 @@ void mem_slab_dealloc(struct mem_slab* slab, void* ptr) {
     tofree->prev_index = NON_EXISTANT;
     first->prev_index = slot_index;
     slab->freelist_start_index = slot_index;
-    slab->freelist_end_index = tofree_prev->next_index;
+    slab->freelist_end_index = tofree_next->next_index;
 
     debug("\t * New first in the freelist %i\n", slab->freelist_start_index);
     debug("\t * New last in the freelist %i\n", slab->freelist_end_index);
