@@ -222,15 +222,24 @@ void mem_slab_dealloc(struct mem_slab* slab, void* ptr) {
 
     debug("\t * To free slot: prev = %i, next = %i\n", tofree->prev_index, tofree->next_index);
 
-    // NOTE: probably when moving the end node it wont work :(
+    // TODO: rewrite this code, a bit messy
     // Move the node of the slot to the start of the freelist.
-    tofree_prev->next_index = tofree->next_index;
-    tofree_next->prev_index = tofree->prev_index;
-    tofree->next_index = slab->freelist_start_index;
-    tofree->prev_index = NON_EXISTANT;
-    first->prev_index = slot_index;
-    slab->freelist_start_index = slot_index;
-    slab->freelist_end_index = tofree_next->next_index;
+    if(tofree->next_index == NON_EXISTANT) {
+        slab->freelist_end_index = tofree->prev_index;
+        tofree_prev->next_index = NON_EXISTANT;
+        tofree->next_index = slab->freelist_start_index;
+        tofree->prev_index = NON_EXISTANT;
+        first->prev_index = slot_index;
+        slab->freelist_start_index = slot_index;
+    } else {
+        tofree_prev->next_index = tofree->next_index;
+        tofree_next->prev_index = tofree->prev_index;
+        tofree->next_index = slab->freelist_start_index;
+        tofree->prev_index = NON_EXISTANT;
+        first->prev_index = slot_index;
+        slab->freelist_start_index = slot_index;
+        slab->freelist_end_index = tofree_next->next_index;
+    }
 
     debug("\t * New first in the freelist %i\n", slab->freelist_start_index);
     debug("\t * New last in the freelist %i\n", slab->freelist_end_index);
