@@ -70,12 +70,14 @@ static void print_freelist_if_enabled(struct mem_slab* slab) {
     int current_index = slab->freelist_start_index;
     while(bufctl_array[current_index].next_index != NON_EXISTANT) {
         struct slab_bufctl current_node = bufctl_array[current_index];
-        debug("\t\t * Node %i, previous = %i, next = %i\n", current_index, current_node.prev_index, current_node.next_index);
+        debug("\t\t * Node %i, previous = %i, next = %i, free = %i\n", 
+                current_index, current_node.prev_index, current_node.next_index, current_node.is_free);
         current_index = current_node.next_index;
     }
 
     struct slab_bufctl current_node = bufctl_array[current_index];
-    debug("\t\t * Node %i, previous = %i, next = %i, free = %i\n", current_index, current_node.prev_index, current_node.next_index);
+    debug("\t\t * Node %i, previous = %i, next = %i, free = %i\n", 
+            current_index, current_node.prev_index, current_node.next_index, current_node.is_free);
 #endif // SLAB_CONFIG_DEBUG_FREELIST
 }
 
@@ -111,8 +113,9 @@ struct mem_slab* mem_slab_create(int size, int alignment) {
     int num_buffers = (PAGE_SIZE - sizeof(struct mem_slab))/(size * sizeof(struct slab_bufctl));
     debug("\t * %i allocations available on this cache\n", num_buffers);
 
-    debug("\t * Generating freelist...\n");
+
     // Link all the free list
+    // TODO: maybe can avoid linking all the freelist at the start and do it with each allocation. Investigate that.
     struct slab_bufctl* freelist_buffer = (struct slab_bufctl*)result->freelist_buffer;
     for(int i = 0; i < num_buffers; i++) {
         freelist_buffer[i].prev_index = i - 1;
@@ -123,12 +126,13 @@ struct mem_slab* mem_slab_create(int size, int alignment) {
     result->freelist_end_index = num_buffers - 1;
     freelist_buffer[result->freelist_end_index].next_index = NON_EXISTANT;
 
+    debug("\t * Freelist generated\n");
+
     // TODO: take into account alignment pls
     // TODO: non allocated pattern or something should be added
     result->allocable_buffer = result->freelist_buffer + num_buffers;
 
     debug("\t * Slots start at %p\n", result->allocable_buffer);
-
     debug("\t * Page ends at %p\n", ((uint8_t*)(result) + PAGE_SIZE));
 
     print_freelist_if_enabled(result);
@@ -207,10 +211,8 @@ void mem_slab_dealloc(struct mem_slab* slab, void* ptr) {
     // Check for double free
     assert((tofree->is_free == SLOT_BUSY) && "Passed pointer has never been allocated or already free");
     
-    // Decrement the reference count
+    // Decrement the reference count and mark node as free
     slab->ref_count--;
-
-    // Mark the node as free
     tofree->is_free = SLOT_FREE; 
 
     // The node is already the first in the list so no movement should be done.
