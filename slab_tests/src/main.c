@@ -3,6 +3,7 @@
 #include <stdbool.h>
 
 #include <slab.h>
+#include <smalloc.h>
 
 #define TEST_NUMBER_OF_FULL_ALLOCATIONS 100
 
@@ -71,13 +72,30 @@ void test_full_cache() {
     printf("TEST: Allocated %i times\n", alloc_number);
 }
 
+void test_smalloc_basic() {
+    smalloc_initialize();
+
+    void* alloc[4];
+    for(int i = 1; i < 4; i++) {
+        printf("TEST: allocation %i, size %i\n", i, i * 4);
+        alloc[i] = smalloc(i * 4);
+    }
+
+    for(int i = 1; i < 4; i++) {
+        printf("TEST: deallocation %i\n", i);
+        sfree(alloc[i]);
+    }
+}
+
 int main(int argc, char** argv) {
-    printf("Basic allocations:\n");
-    test_basic_allocations();
-
-    printf("Allocating and deallocating all:\n");
-    test_allocate_deallocate_all();
-
-    printf("Fulling the cache:\n");
-    test_full_cache();
+//    printf("Basic allocations:\n");
+//    test_basic_allocations();
+//
+//    printf("Allocating and deallocating all:\n");
+//    test_allocate_deallocate_all();
+//
+//    printf("Fulling the cache:\n");
+//    test_full_cache();
+//
+    test_smalloc_basic();
 }
