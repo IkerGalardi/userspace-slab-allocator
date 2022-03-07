@@ -62,7 +62,9 @@ GENERATED :=
 OBJECTS :=
 
 GENERATED += $(OBJDIR)/slab.o
+GENERATED += $(OBJDIR)/smalloc.o
 OBJECTS += $(OBJDIR)/slab.o
+OBJECTS += $(OBJDIR)/smalloc.o
 
 # Rules
 # #############################################
@@ -127,6 +129,9 @@ endif
 # #############################################
 
 $(OBJDIR)/slab.o: src/slab.c
+	@echo $(notdir $<)
+	$(SILENT) $(CC) $(ALL_CFLAGS) $(FORCE_INCLUDE) -o "$@" -MF "$(@:%.o=%.d)" -c "$<"
+$(OBJDIR)/smalloc.o: src/smalloc.c
 	@echo $(notdir $<)
 	$(SILENT) $(CC) $(ALL_CFLAGS) $(FORCE_INCLUDE) -o "$@" -MF "$(@:%.o=%.d)" -c "$<"
 
