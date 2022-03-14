@@ -22,6 +22,10 @@ struct mem_slab* byte4_cache = NULL;
 struct mem_slab* byte8_cache = NULL;
 struct mem_slab* byte16_cache = NULL;
 
+static void* get_page_pointer(void* ptr) {
+    return (void*)((uintptr_t)ptr & (~0xFFF));
+}
+
 static void* allocate_and_grow_if_necessary_from_slab(struct mem_slab* slab) {
     struct mem_slab* slab_to_allocate = slab;
     void* ptr = mem_slab_alloc(slab_to_allocate);
@@ -52,12 +56,11 @@ static void* allocate_and_grow_if_necessary_from_slab(struct mem_slab* slab) {
 static struct mem_slab* is_ptr_allocated_in_pool(struct mem_slab* pool, void* ptr) {
     struct mem_slab* current_slab = pool;
     while(current_slab != NULL) {
-        void* page_of_ptr = (void*)((uint64_t)ptr - ((uint64_t)ptr % PAGE_SIZE));
         debug("\t* Pointer of cache is %p\n", current_slab);
 
         // If the pointer is in the same page as the slab, then the pointer
         // was allocated on that slab
-        if(current_slab == page_of_ptr) {
+        if(current_slab == get_page_pointer(ptr)) {
             debug("\t* Found cache!\n");
             return current_slab;
         }
@@ -111,6 +114,7 @@ void sfree(void* ptr) {
     assert((ptr != NULL) && "Passed pointer should be a valid pointer");
 
     debug("SMALLOC: freeing pointer %p\n", ptr);
+    debug("\t* Page of pointer is %p\n", get_page_pointer(ptr));
 
     // Check if the pointer was allocated on the byte slab cache
     struct mem_slab* ptr_slab = is_ptr_allocated_in_pool(byte_cache, ptr);
