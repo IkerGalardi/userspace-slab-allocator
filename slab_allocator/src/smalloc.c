@@ -57,7 +57,8 @@ static struct mem_slab* is_ptr_allocated_in_pool(struct mem_slab* pool, void* pt
 
         // If the pointer is in the same page as the slab, then the pointer
         // was allocated on that slab
-        if((void*)current_slab == page_of_ptr) {
+        if(current_slab == page_of_ptr) {
+            debug("\t* Found cache!\n");
             return current_slab;
         }
 
