@@ -52,13 +52,17 @@ static void* allocate_and_grow_if_necessary_from_slab(struct mem_slab* slab) {
 static struct mem_slab* is_ptr_allocated_in_pool(struct mem_slab* pool, void* ptr) {
     struct mem_slab* current_slab = pool;
     while(current_slab != NULL) {
-        void* page_of_ptr = PAGE_SIZE * (a / PAGE_SIZE);
+        void* page_of_ptr = (void*)((uint64_t)ptr - ((uint64_t)ptr % PAGE_SIZE));
+        debug("\t* Page of pointer is %p\n", page_of_ptr);
+        debug("\t* Pointer of cache is %p\n", current_slab);
 
         // If the pointer is in the same page as the slab, then the pointer
         // was allocated on that slab
         if((void*)current_slab == page_of_ptr) {
             return current_slab;
         }
+
+        current_slab = current_slab->next;
     }
 
     return NULL;
@@ -106,9 +110,12 @@ void* smalloc(int size) {
 void sfree(void* ptr) {
     assert((ptr != NULL) && "Passed pointer should be a valid pointer");
 
+    debug("SMALLOC: freeing pointer %p\n", ptr);
+
     // Check if the pointer was allocated on the byte slab cache
     struct mem_slab* ptr_slab = is_ptr_allocated_in_pool(byte_cache, ptr);
     if(ptr_slab != NULL) {
+        debug("* Pointer on byte cache pool\n");
         mem_slab_dealloc(ptr_slab, ptr);
         return;
     }
@@ -116,6 +123,7 @@ void sfree(void* ptr) {
     // Check if the pointer was allocated on the 4 byte slab cache
     ptr_slab = is_ptr_allocated_in_pool(byte4_cache, ptr);
     if(ptr_slab != NULL) {
+        debug("* Pointer on 4 byte cache pool\n");
         mem_slab_dealloc(ptr_slab, ptr);
         return;
     }
@@ -123,6 +131,7 @@ void sfree(void* ptr) {
     // Check if the pointer was allocated on the 8 byte slab cache
     ptr_slab = is_ptr_allocated_in_pool(byte8_cache, ptr);
     if(ptr_slab != NULL) {
+        debug("* Pointer on 8 byte cache pool\n");
         mem_slab_dealloc(ptr_slab, ptr);
         return;
     }
@@ -130,10 +139,12 @@ void sfree(void* ptr) {
     // Check if the pointer was allocated on the 16 byte slab cache
     ptr_slab = is_ptr_allocated_in_pool(byte16_cache, ptr);
     if(ptr_slab != NULL) {
+        debug("* Pointer on 16 byte cache pool\n");
         mem_slab_dealloc(ptr_slab, ptr);
         return;
     }
 
     // If not allocated on caches, the pointer was allocated with malloc so just free.
+    debug("* Pointer not allocated on caches\n");
     free(ptr);
 }
