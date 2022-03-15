@@ -87,7 +87,28 @@ void test_smalloc_basic() {
     }
 }
 
+void test_smalloc_random_allocations() {
+    const int number_of_allocations = 20;
+
+    int allocation_sizes[] = { 4, 1, 3, 9, 8, 6, 2, 5, 7, 14, 11, 13, 19, 18, 16, 21, 15, 17 };
+    void* allocations[number_of_allocations];
+
+    // Do allocations of random sizes
+    for(int i = 0; i < number_of_allocations; i++) {
+        printf("TEST: allocation %i\n", i); fflush(stdout);
+        int size_to_alloc = i % 18;
+        allocations[i] = smalloc(size_to_alloc);
+    }
+
+    // Free the allocations because we are good boiz
+    for(int i = number_of_allocations - 1; i >= 0; i--) {
+        printf("TEST: freeing %i\n", i); fflush(stdout);
+        sfree(allocations[i]);
+    }
+}
+
 int main(int argc, char** argv) {
+    smalloc_initialize();
 //    printf("Basic allocations:\n");
 //    test_basic_allocations();
 //
@@ -97,5 +118,6 @@ int main(int argc, char** argv) {
 //    printf("Fulling the cache:\n");
 //    test_full_cache();
 //
-    test_smalloc_basic();
+    //test_smalloc_basic();
+    test_smalloc_random_allocations();
 }
