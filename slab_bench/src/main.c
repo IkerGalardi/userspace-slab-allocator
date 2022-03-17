@@ -6,6 +6,8 @@
 #include <slab.h>
 #include <smalloc.h>
 
+#define USE_SMALLOC
+
 #ifdef USE_SMALLOC
 #define allocation_function smalloc
 #define free_function       sfree
@@ -50,7 +52,12 @@ void do_allocations_in_loop(int count, int alloc_size) {
 }
 
 int main() {
+#ifdef USE_SMALLOC
     smalloc_initialize();
+    printf("BENCH: using automatic slabbing\n");
+#else
+    printf("BENCH: not using automatic slabbing\n");
+#endif
     
     printf("BENCH: 4 byte allocations:\n");
     do_allocations_in_loop(10000, 4);
