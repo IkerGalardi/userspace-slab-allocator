@@ -11,16 +11,18 @@ endif
 ifeq ($(config),debug)
   slaballocator_config = debug
   slabtests_config = debug
+  bench_config = debug
 
 else ifeq ($(config),release)
   slaballocator_config = release
   slabtests_config = release
+  bench_config = release
 
 else
   $(error "invalid configuration $(config)")
 endif
 
-PROJECTS := slaballocator slabtests
+PROJECTS := slaballocator slabtests bench
 
 .PHONY: all clean help $(PROJECTS) 
 
@@ -38,9 +40,16 @@ ifneq (,$(slabtests_config))
 	@${MAKE} --no-print-directory -C slab_tests -f Makefile config=$(slabtests_config)
 endif
 
+bench: slaballocator
+ifneq (,$(bench_config))
+	@echo "==== Building bench ($(bench_config)) ===="
+	@${MAKE} --no-print-directory -C slab_bench -f Makefile config=$(bench_config)
+endif
+
 clean:
 	@${MAKE} --no-print-directory -C slab_allocator -f Makefile clean
 	@${MAKE} --no-print-directory -C slab_tests -f Makefile clean
+	@${MAKE} --no-print-directory -C slab_bench -f Makefile clean
 
 help:
 	@echo "Usage: make [config=name] [target]"
@@ -54,5 +63,6 @@ help:
 	@echo "   clean"
 	@echo "   slaballocator"
 	@echo "   slabtests"
+	@echo "   bench"
 	@echo ""
 	@echo "For more information, see https://github.com/premake/premake-core/wiki"

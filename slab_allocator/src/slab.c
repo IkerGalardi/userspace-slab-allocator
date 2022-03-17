@@ -11,8 +11,8 @@
 
 #define PAGE_SIZE 4 * 1024
 
-#define SLAB_CONFIG_DEBUG
-#define SLAB_CONFIG_DEBUG_FREELIST
+//#define SLAB_CONFIG_DEBUG
+//#define SLAB_CONFIG_DEBUG_FREELIST
 
 #define NON_EXISTANT (uint16_t)(-1)
 

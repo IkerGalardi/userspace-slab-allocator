@@ -9,7 +9,7 @@
 
 #define PAGE_SIZE 1024 * 4
 
-#define SMALLOC_CONFIG_DEBUG
+//#define SMALLOC_CONFIG_DEBUG
 
 #ifdef SMALLOC_CONFIG_DEBUG
     #define debug(...) fprintf(stderr, __VA_ARGS__)

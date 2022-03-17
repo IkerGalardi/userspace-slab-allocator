@@ -3,4 +3,4 @@ workspace "Userspace Slab"
 
     include "slab_allocator"
     include "slab_tests"
---    include "slab_bench"
+    include "slab_bench"
