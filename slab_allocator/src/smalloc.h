@@ -1,6 +1,8 @@
 #ifndef SMALLOC_H
 #define SMALLOC_H
 
+#include <stddef.h>
+
 /*
  * Initializes all the slabs.
  */
@@ -11,7 +13,7 @@ void smalloc_initialize();
  *
  * @param size: size of the allocation
  */
-void* smalloc(int size);
+void* smalloc(size_t size);
 
 /* 
  * Free's a previously allocated pointer.

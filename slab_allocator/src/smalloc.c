@@ -89,7 +89,7 @@ void smalloc_initialize() {
     debug("SMALLOC: created cache of size 16 at %p\n", byte16_cache);
 }
 
-void* smalloc(int size) {
+void* smalloc(size_t size) {
     assert((size >= 0) && "Allocation size must be bigger than 0"); 
     debug("SMALLOC: Allocation of size %i\n", size);
 
