@@ -8,7 +8,7 @@
 
 #define BENCH_NUMBER_OF_ALLOCATIONS 10000
 
-typedef void*(*malloc_function)(int);
+typedef void*(*malloc_function)(size_t);
 typedef void(*free_function)(void*);
 
 int64_t difftimespec_ns(const struct timespec after, const struct timespec before)
@@ -54,7 +54,7 @@ static void do_and_print_benchmark_for_size(size_t size) {
 int main() {
     smalloc_initialize();
 
-    printf(",System malloc,System free,Slabbed malloc,Slabbed free");    
+    printf("Alloc size,System malloc,System free,Slabbed malloc,Slabbed free");    
     do_and_print_benchmark_for_size(4);   
     do_and_print_benchmark_for_size(16);   
     do_and_print_benchmark_for_size(32);   
