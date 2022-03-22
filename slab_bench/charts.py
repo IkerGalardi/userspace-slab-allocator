@@ -60,7 +60,8 @@ def plot_speed_comparisons(data):
     rects2 = ax.bar(x + width/2, slabbed_time, width, label='Slabbed')
     
     # Add some text for labels, title and custom x-axis tick labels, etc.
-    ax.set_ylabel('Acceleration factor')
+    ax.set_ylabel('Execution time (ns)')
+    ax.set_xlabel('Allocation size (bytes)')
     ax.set_title('Acceleration factors')
     ax.set_xticks(x, labels)
     ax.legend()
