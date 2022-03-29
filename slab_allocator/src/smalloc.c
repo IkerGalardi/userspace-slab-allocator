@@ -17,10 +17,8 @@
     #define debug(...)
 #endif
 
-struct mem_slab* byte_cache = NULL;
-struct mem_slab* byte4_cache = NULL;
-struct mem_slab* byte8_cache = NULL;
-struct mem_slab* byte16_cache = NULL;
+#define SMALLOC_CACHE_COUNT 4
+struct mem_slab* caches[SMALLOC_CACHE_COUNT] = { NULL, };
 
 static void* get_page_pointer(void* ptr) {
     return (void*)((uintptr_t)ptr & (~0xFFF));
@@ -72,83 +70,54 @@ static struct mem_slab* is_ptr_allocated_in_pool(struct mem_slab* pool, void* pt
 }
 
 void smalloc_initialize() {
-    byte_cache = mem_slab_create(1,  0);
-    assert((byte_cache   != NULL) && "Error initializing byte cache");
-    debug("SMALLOC: created cache of size 1 at %p\n", byte_cache);
+    // NOTE: editing this array will change the cache configuration of smalloc
+    size_t cache_sizes[SMALLOC_CACHE_COUNT] = { 1, 4, 8, 16 };
 
-    byte4_cache = mem_slab_create(4,  0);
-    assert((byte4_cache  != NULL) && "Error initializing 4 byte cache");
-    debug("SMALLOC: created cache of size 4 at %p\n", byte4_cache);
+    // Initialize the caches using the configuration
+    debug("SMALLOC: creating %i caches at initialization\n", SMALLOC_CACHE_COUNT);
+    for(int i = 0; i < SMALLOC_CACHE_COUNT; i++) {
+        caches[i] = mem_slab_create(cache_sizes[i], 0);
+        assert((caches[i] != NULL) && "Error while creating cache");
 
-    byte8_cache = mem_slab_create(8,  0);
-    assert((byte8_cache  != NULL) && "Error initializing 8 byte cache");
-    debug("SMALLOC: created cache of size 8 at %p\n", byte8_cache);
-
-    byte16_cache = mem_slab_create(16, 0);
-    assert((byte16_cache != NULL) && "Error initializing 16 byte cache");
-    debug("SMALLOC: created cache of size 16 at %p\n", byte16_cache);
+        debug("\t* Created cache of size %i\n", cache_sizes[i]);
+    }
 }
 
 void* smalloc(size_t size) {
     assert((size >= 0) && "Allocation size must be bigger than 0"); 
     debug("SMALLOC: Allocation of size %i\n", size);
 
-    if(size == 1) {
-        return allocate_and_grow_if_necessary_from_slab(byte_cache);
-    } else if(size <= 4) {
-        debug("\t* Trying to use cache pool of size 4\n", size);
-        return allocate_and_grow_if_necessary_from_slab(byte4_cache);
-    } else if(size <= 8) {
-        debug("\t* Trying to use cache pool of size 8\n", size);
-        return allocate_and_grow_if_necessary_from_slab(byte8_cache);
-    } else if(size <= 16) {
-        debug("\t* Trying to use cache pool of size 16\n", size);
-        return allocate_and_grow_if_necessary_from_slab(byte16_cache);
-    } else {
-        debug("\t* Could not use any cache :(\n", size);
-        return malloc(size);
+    // Find a suitable cache and try to allocate on it.
+    for(int i = 0; i < SMALLOC_CACHE_COUNT; i++) {
+        struct mem_slab* slab = caches[i];
+
+        debug("\t* Trying to allocate on cache of size %i\n", slab->size);
+
+        // NOTE: Assumes that the chache configuration sizes are sorted.
+        if(size <= slab->size) {
+            return allocate_and_grow_if_necessary_from_slab(slab);
+        }
     }
+
+    // If this point is reached, means that no cache is suitable for allocating the
+    // given size.
+    return malloc(size);
 }
 
 void sfree(void* ptr) {
     assert((ptr != NULL) && "Passed pointer should be a valid pointer");
 
-    debug("SMALLOC: freeing pointer %p\n", ptr);
-    debug("\t* Page of pointer is %p\n", get_page_pointer(ptr));
+    for(int i = 0; i < SMALLOC_CACHE_COUNT; i++) {
+        struct mem_slab* slab = is_ptr_allocated_in_pool(caches[i], ptr);
 
-    // Check if the pointer was allocated on the byte slab cache
-    struct mem_slab* ptr_slab = is_ptr_allocated_in_pool(byte_cache, ptr);
-    if(ptr_slab != NULL) {
-        debug("\t* Pointer on byte cache pool\n");
-        mem_slab_dealloc(ptr_slab, ptr);
-        return;
+        // If the returned slab pointer is not NULL the pointer was allocated there.
+        if(slab != NULL) {
+            mem_slab_dealloc(slab, ptr);
+            return;
+        }
     }
 
-    // Check if the pointer was allocated on the 4 byte slab cache
-    ptr_slab = is_ptr_allocated_in_pool(byte4_cache, ptr);
-    if(ptr_slab != NULL) {
-        debug("\t* Pointer on 4 byte cache pool\n");
-        mem_slab_dealloc(ptr_slab, ptr);
-        return;
-    }
-
-    // Check if the pointer was allocated on the 8 byte slab cache
-    ptr_slab = is_ptr_allocated_in_pool(byte8_cache, ptr);
-    if(ptr_slab != NULL) {
-        debug("\t* Pointer on 8 byte cache pool\n");
-        mem_slab_dealloc(ptr_slab, ptr);
-        return;
-    }
-
-    // Check if the pointer was allocated on the 16 byte slab cache
-    ptr_slab = is_ptr_allocated_in_pool(byte16_cache, ptr);
-    if(ptr_slab != NULL) {
-        debug("\t* Pointer on 16 byte cache pool\n");
-        mem_slab_dealloc(ptr_slab, ptr);
-        return;
-    }
-
-    // If not allocated on caches, the pointer was allocated with malloc so just free.
-    debug("\t* Pointer not allocated on caches\n");
+    // If this point is reached, means that the pointer was not allocated on any
+    // cache. 
     free(ptr);
 }
