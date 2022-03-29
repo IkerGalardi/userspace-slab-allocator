@@ -24,22 +24,26 @@ static void* get_page_pointer(void* ptr) {
     return (void*)((uintptr_t)ptr & (~0xFFF));
 }
 
-static void* allocate_and_grow_if_necessary_from_slab(struct mem_slab* slab) {
-    struct mem_slab* slab_to_allocate = slab;
+static void* allocate_and_grow_if_necessary(int pool_index) {
+    struct mem_slab* slab_to_allocate = caches[pool_index];
     void* ptr = mem_slab_alloc(slab_to_allocate);
 
     while(ptr == NULL) {
         debug("\t* Cache %p full\n", slab);
-        if(slab_to_allocate->next == NULL) {
-            slab_to_allocate->next = mem_slab_create(slab_to_allocate->size, slab_to_allocate->alignment);
-            
-            // If no more slabs can be created, simply return NULL, probably system OOM
-            if(slab_to_allocate->next == NULL) {
-                debug("\t* Could not create more caches, system probably OOM\n");
-                return NULL;
-            }
 
-            debug("\t* Needed another cache, so created!\n");
+        // At this point we traversed all the caches of the necessary size. Instead of appending
+        // the cache at the end, the new cache could be inserted at the start so that next time
+        // is not necessary to traverse the whole pool every time.
+        if(slab_to_allocate->next == NULL) {
+            struct mem_slab* old_first = caches[pool_index];
+            struct mem_slab* new_first = mem_slab_create(old_first->size, 0);
+            
+            caches[pool_index] = new_first;
+            new_first->next = old_first;
+
+            ptr = mem_slab_alloc(new_first);
+
+            break;
         }
 
         slab_to_allocate = slab_to_allocate->next;
@@ -95,7 +99,7 @@ void* smalloc(size_t size) {
 
         // NOTE: Assumes that the chache configuration sizes are sorted.
         if(size <= slab->size) {
-            return allocate_and_grow_if_necessary_from_slab(slab);
+            return allocate_and_grow_if_necessary(i);
         }
     }
 
