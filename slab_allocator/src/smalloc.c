@@ -28,6 +28,7 @@ static void* allocate_and_grow_if_necessary(int pool_index) {
     struct mem_slab* slab_to_allocate = caches[pool_index];
     void* ptr = mem_slab_alloc(slab_to_allocate);
 
+    int jumps = 0;
     while(ptr == NULL) {
         debug("\t* Cache %p full\n", slab);
 
@@ -48,9 +49,12 @@ static void* allocate_and_grow_if_necessary(int pool_index) {
 
         slab_to_allocate = slab_to_allocate->next;
         ptr = mem_slab_alloc(slab_to_allocate);
+
+        jumps++;
     }
 
     debug("\t* Allocated pointer is %p\n", ptr);
+    debug(stderr, "\t* Had to do %d jumps to allocate\n", jumps);
 
     return ptr;
 }
@@ -75,7 +79,7 @@ static struct mem_slab* is_ptr_allocated_in_pool(struct mem_slab* pool, void* pt
 
 void smalloc_initialize() {
     // NOTE: editing this array will change the cache configuration of smalloc
-    size_t cache_sizes[SMALLOC_CACHE_COUNT] = { 1, 4, 8, 16 };
+    size_t cache_sizes[SMALLOC_CACHE_COUNT] = { 8, 16, 24, 32 };
 
     // Initialize the caches using the configuration
     debug("SMALLOC: creating %i caches at initialization\n", SMALLOC_CACHE_COUNT);
