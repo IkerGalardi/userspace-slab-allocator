@@ -54,7 +54,7 @@ static void* allocate_and_grow_if_necessary(int pool_index) {
     }
 
     debug("\t* Allocated pointer is %p\n", ptr);
-    debug(stderr, "\t* Had to do %d jumps to allocate\n", jumps);
+    debug("\t* Had to do %d jumps to allocate\n", jumps);
 
     return ptr;
 }
