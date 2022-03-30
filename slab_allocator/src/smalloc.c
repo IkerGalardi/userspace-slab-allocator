@@ -20,37 +20,66 @@
 #define SMALLOC_CACHE_COUNT 4
 struct mem_slab* caches[SMALLOC_CACHE_COUNT] = { NULL, };
 
+/*
+ * Returns the pointer to the start of the page given a pointer.
+ *
+ * @param ptr: pointer to find the start of the page
+ * @return: pointer to the start of the page of 'ptr'
+ */
 static void* get_page_pointer(void* ptr) {
     return (void*)((uintptr_t)ptr & (~0xFFF));
 }
 
-static void* allocate_and_grow_if_necessary_from_slab(struct mem_slab* slab) {
-    struct mem_slab* slab_to_allocate = slab;
+/*
+ * Allocates a pointer given a pool of slabs. If all the slabs of the pool are full
+ * the function will create another slab automatically.
+ *
+ * @param pool_index: index of the cache linked list in the 'caches' array
+ * @return: allocated pointer
+ */
+static void* allocate_and_grow_if_necessary(int pool_index) {
+    struct mem_slab* slab_to_allocate = caches[pool_index];
     void* ptr = mem_slab_alloc(slab_to_allocate);
 
+    int jumps = 0;
     while(ptr == NULL) {
         debug("\t* Cache %p full\n", slab);
-        if(slab_to_allocate->next == NULL) {
-            slab_to_allocate->next = mem_slab_create(slab_to_allocate->size, slab_to_allocate->alignment);
-            
-            // If no more slabs can be created, simply return NULL, probably system OOM
-            if(slab_to_allocate->next == NULL) {
-                debug("\t* Could not create more caches, system probably OOM\n");
-                return NULL;
-            }
 
-            debug("\t* Needed another cache, so created!\n");
+        // At this point we traversed all the caches of the necessary size. Instead of appending
+        // the cache at the end, the new cache could be inserted at the start so that next time
+        // is not necessary to traverse the whole pool every time.
+        if(slab_to_allocate->next == NULL) {
+            struct mem_slab* old_first = caches[pool_index];
+            struct mem_slab* new_first = mem_slab_create(old_first->size, 0);
+            
+            caches[pool_index] = new_first;
+            new_first->next = old_first;
+
+            ptr = mem_slab_alloc(new_first);
+
+            break;
         }
 
         slab_to_allocate = slab_to_allocate->next;
         ptr = mem_slab_alloc(slab_to_allocate);
+
+        jumps++;
     }
 
     debug("\t* Allocated pointer is %p\n", ptr);
+    debug("\t* Had to do %d jumps to allocate\n", jumps);
 
     return ptr;
 }
 
+/*
+ * Finds if a pointer is allocated in a pool of slabs.
+ *
+ * @param pool: pointer to the first element of slab pool
+ * @param ptr: pointer to find in pool
+ *
+ * @return: the slab where 'ptr' is allocated, NULL if 'ptr' was not allocated in the pool.
+ */
 static struct mem_slab* is_ptr_allocated_in_pool(struct mem_slab* pool, void* ptr) {
     struct mem_slab* current_slab = pool;
     while(current_slab != NULL) {
@@ -71,7 +100,7 @@ static struct mem_slab* is_ptr_allocated_in_pool(struct mem_slab* pool, void* pt
 
 void smalloc_initialize() {
     // NOTE: editing this array will change the cache configuration of smalloc
-    size_t cache_sizes[SMALLOC_CACHE_COUNT] = { 1, 4, 8, 16 };
+    size_t cache_sizes[SMALLOC_CACHE_COUNT] = { 8, 16, 24, 32 };
 
     // Initialize the caches using the configuration
     debug("SMALLOC: creating %i caches at initialization\n", SMALLOC_CACHE_COUNT);
@@ -95,7 +124,7 @@ void* smalloc(size_t size) {
 
         // NOTE: Assumes that the chache configuration sizes are sorted.
         if(size <= slab->size) {
-            return allocate_and_grow_if_necessary_from_slab(slab);
+            return allocate_and_grow_if_necessary(i);
         }
     }
 
