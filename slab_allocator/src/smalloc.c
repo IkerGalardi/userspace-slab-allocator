@@ -20,10 +20,23 @@
 #define SMALLOC_CACHE_COUNT 4
 struct mem_slab* caches[SMALLOC_CACHE_COUNT] = { NULL, };
 
+/*
+ * Returns the pointer to the start of the page given a pointer.
+ *
+ * @param ptr: pointer to find the start of the page
+ * @return: pointer to the start of the page of 'ptr'
+ */
 static void* get_page_pointer(void* ptr) {
     return (void*)((uintptr_t)ptr & (~0xFFF));
 }
 
+/*
+ * Allocates a pointer given a pool of slabs. If all the slabs of the pool are full
+ * the function will create another slab automatically.
+ *
+ * @param pool_index: index of the cache linked list in the 'caches' array
+ * @return: allocated pointer
+ */
 static void* allocate_and_grow_if_necessary(int pool_index) {
     struct mem_slab* slab_to_allocate = caches[pool_index];
     void* ptr = mem_slab_alloc(slab_to_allocate);
@@ -59,6 +72,14 @@ static void* allocate_and_grow_if_necessary(int pool_index) {
     return ptr;
 }
 
+/*
+ * Finds if a pointer is allocated in a pool of slabs.
+ *
+ * @param pool: pointer to the first element of slab pool
+ * @param ptr: pointer to find in pool
+ *
+ * @return: the slab where 'ptr' is allocated, NULL if 'ptr' was not allocated in the pool.
+ */
 static struct mem_slab* is_ptr_allocated_in_pool(struct mem_slab* pool, void* ptr) {
     struct mem_slab* current_slab = pool;
     while(current_slab != NULL) {
