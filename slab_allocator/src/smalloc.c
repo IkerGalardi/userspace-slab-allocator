@@ -41,34 +41,19 @@ static void* allocate_and_grow_if_necessary(int pool_index) {
     struct mem_slab* slab_to_allocate = caches[pool_index];
     void* ptr = mem_slab_alloc(slab_to_allocate);
 
-    int jumps = 0;
-    while(ptr == NULL) {
-        debug("\t* Cache %p full\n", slab);
+    // We expect that the first cache is always free as we append new caches to the
+    // start of the list and we move to the start a cache when a slot is free'd. So
+    // if the first cache is not free we append a new one to the start.
+    if(ptr == NULL) {
+        struct mem_slab* new_slab = mem_slab_create(slab_to_allocate->size, slab_to_allocate->alignment);
+        new_slab->next = caches[pool_index];
+        caches[pool_index]->prev = new_slab;
+        caches[pool_index] = new_slab;
 
-        // At this point we traversed all the caches of the necessary size. Instead of appending
-        // the cache at the end, the new cache could be inserted at the start so that next time
-        // is not necessary to traverse the whole pool every time.
-        if(slab_to_allocate->next == NULL) {
-            struct mem_slab* old_first = caches[pool_index];
-            struct mem_slab* new_first = mem_slab_create(old_first->size, 0);
-            
-            caches[pool_index] = new_first;
-            new_first->next = old_first;
-            old_first->prev = new_first;
-
-            ptr = mem_slab_alloc(new_first);
-
-            break;
-        }
-
-        slab_to_allocate = slab_to_allocate->next;
-        ptr = mem_slab_alloc(slab_to_allocate);
-
-        jumps++;
+        ptr = mem_slab_alloc(new_slab);
     }
 
     debug("\t* Allocated pointer is %p\n", ptr);
-    debug("\t* Had to do %d jumps to allocate\n", jumps);
 
     return ptr;
 }
