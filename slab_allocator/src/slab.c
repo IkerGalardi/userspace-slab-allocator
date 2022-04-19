@@ -128,6 +128,8 @@ struct mem_slab* mem_slab_create(int size, int alignment) {
     result->freelist_end_index = num_buffers - 1;
     freelist_buffer[result->freelist_end_index].next_index = NON_EXISTANT;
 
+    result->max_refs = num_buffers;
+
     debug("\t * Freelist generated\n");
 
     // TODO: take into account alignment pls

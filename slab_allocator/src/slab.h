@@ -13,6 +13,7 @@ struct mem_slab {
 
     // Object allocation count
     int ref_count;
+    int max_refs;
 
     // Reference to the first bufctl
     uint16_t freelist_start_index;
