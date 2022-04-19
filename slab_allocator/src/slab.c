@@ -106,6 +106,7 @@ struct mem_slab* mem_slab_create(int size, int alignment) {
     result->alignment = alignment;
     result->freelist_buffer = (struct slab_bufctl*)(result + 1);
     result->next = NULL;
+    result->prev = NULL;
 
     debug("\t * Freelist buffer at %p\n", result->freelist_buffer);
 

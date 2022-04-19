@@ -54,6 +54,7 @@ static void* allocate_and_grow_if_necessary(int pool_index) {
             
             caches[pool_index] = new_first;
             new_first->next = old_first;
+            old_first->prev = new_first;
 
             ptr = mem_slab_alloc(new_first);
 

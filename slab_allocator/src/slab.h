@@ -24,6 +24,7 @@ struct mem_slab {
     void* allocable_buffer;
 
     struct mem_slab* next;
+    struct mem_slab* prev;
 };
 
 // TODO: check if constructors and destructors are needed for userspace
