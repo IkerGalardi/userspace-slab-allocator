@@ -3,7 +3,15 @@
 #include <assert.h>
 #include <stdio.h>
 
-#define CACHE_POOL_PARANOID_ENABLE_PARANOID_ASSERTS
+#define POOL_CONFIG_PARANOID_ASSERTS
+#define POOL_CONFIG_DEBUG
+
+
+#ifdef POOL_CONFIG_DEBUG
+    #define debug(...) fprintf(stderr, __VA_ARGS__); fflush(stderr)
+#else
+    #define debug(...)
+#endif
 
 /*
  * Returns the pointer to the start of the page given a pointer.
@@ -62,6 +70,8 @@ struct slab_pool slab_pool_create(size_t allocation_size) {
     result.list_end = first_slab;
     result.allocation_size = allocation_size;
 
+    debug("POOL: created pool of size %i\n", result.allocation_size);
+
     return result;
 }
 
@@ -76,11 +86,14 @@ static struct mem_slab* get_slab_with_enough_space(struct slab_pool* pool) {
 
     // If the first slab has enough space simply return the first slab.
     if(first_slab->ref_count < first_slab->max_refs) {
+        debug("\t\t * First slab already free, returning %p\n", first_slab);
         return first_slab;
     }
 
-#ifdef CACHE_POOL_PARANOID_ENABLE_PARANOID_ASSERTS
+    debug("\t\t * First slab not free, need to grow the slab list\n");
+#ifdef POOL_CONFIG_PARANOID_ASSERTS
     int list_size_before_growing = get_list_size(pool->list_start);
+    debug("\t\t * Finished getting the list size: %i\n", list_size_before_growing);
 #endif
 
     // Create a new slab and append it to the start of the pool
@@ -88,9 +101,11 @@ static struct mem_slab* get_slab_with_enough_space(struct slab_pool* pool) {
     new_first->next = first_slab;
     first_slab->prev = new_first;
     pool->list_start = new_first;
+    debug("\t\t * Appended new slab %p to the list\n", new_first);
 
-#ifdef CACHE_POOL_PARANOID_ENABLE_PARANOID_ASSERTS
+#ifdef POOL_CONFIG_PARANOID_ASSERTS
     int list_size_after_growing = get_list_size(pool->list_start);
+    debug("\t\t * Finished getting the list size: %i\n", list_size_before_growing);
     assert((list_size_before_growing == list_size_after_growing - 1));
 
     assert((first_slab != pool->list_start));
@@ -100,42 +115,55 @@ static struct mem_slab* get_slab_with_enough_space(struct slab_pool* pool) {
 }
 
 void* slab_pool_allocate(struct slab_pool* pool) {
+    debug("POOL: allocating memory...\n");
+    debug("\t* Getting free slab...\n");
     struct mem_slab* slab_with_space = get_slab_with_enough_space(pool);
     assert((slab_with_space != NULL) && "NULL slab returned from get_slab_with_enough_space");
-    
+
     // Allocate the pointer to be returned
     void* result = mem_slab_alloc(slab_with_space);
 
-#ifdef CACHE_POOL_PARANOID_ENABLE_PARANOID_ASSERTS
+#ifdef POOL_CONFIG_PARANOID_ASSERTS
     assert((result != NULL) && "Slab full when it should not");
 #endif
 
     // Check if the slab is full, if it is move it to the end of the caches to ensure that
     // caches with enough capacity to allocate will always be at the start.
     bool slab_full = slab_with_space->ref_count == slab_with_space->max_refs;
+    debug("\t* Slab full? %i\n", slab_full); 
     if(slab_full && (slab_with_space != pool->list_end)) {
+        debug("\t* Moving the slab to the end of the cache\n"); 
         struct mem_slab* previous = slab_with_space->prev;
         struct mem_slab* next =     slab_with_space->next;
 
-        previous->next = next;
+        if(previous != NULL)
+            previous->next = next;
+
         next->prev = previous;
         slab_with_space->prev = pool->list_end;
         pool->list_end->next = slab_with_space;
         pool->list_end = slab_with_space;
     }
 
+    debug("\t* Returning\n"); 
     return result;
 }
 
 bool slab_pool_deallocate(struct slab_pool* pool, void* ptr) {
+    debug("POOL: deallocating pointer %p\n", ptr);
     struct mem_slab* slab = is_ptr_allocated_in_pool(pool->list_start, ptr);
+
+    debug("\t* Slab containing pointer is %p\n", slab);
     
     // If the pointer was not allocated on any slab then simply return false.
-    if(slab == NULL)
+    if(slab == NULL) {
+        debug("\t* Slab not on this pool, returning\n");
         return false;
+    }
 
     // If the slab is not already at the start of the pool, move it to the start.
     if(slab != pool->list_start) {
+        debug("\t* Freed slab is not first in the list, moving it\n");
         struct mem_slab* list_start = pool->list_start;
         struct mem_slab* previous = slab->prev;
         struct mem_slab* next = slab->next;
@@ -148,6 +176,7 @@ bool slab_pool_deallocate(struct slab_pool* pool, void* ptr) {
         pool->list_start = slab;
     }
 
+    debug("\t* Freeing in the slab\n");
     mem_slab_dealloc(pool->list_start, ptr);
     return true;
 }
