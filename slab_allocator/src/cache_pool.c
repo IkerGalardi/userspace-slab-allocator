@@ -85,13 +85,13 @@ static struct mem_slab* get_slab_with_enough_space(struct slab_pool pool) {
 
     // Create a new slab and append it to the start of the pool
     struct mem_slab* new_first = mem_slab_create(pool.allocation_size, 0);
-    first_slab->prev = new_first;
     new_first->next = first_slab;
+    first_slab->prev = new_first;
     pool.list_start = new_first;
 
 #ifdef CACHE_POOL_PARANOID_ENABLE_PARANOID_ASSERTS
     int list_size_after_growing = get_list_size(pool.list_start);
-    assert((list_size_after_growing == list_size_after_growing - 1) && "Growing wrongly");
+    assert((list_size_before_growing == list_size_after_growing - 1));
 #endif
 
     return new_first;
