@@ -22,7 +22,7 @@ static void* get_page_pointer(void* ptr) {
  * @param pool: pointer to the first element of slab pool
  * @param ptr: pointer to find in pool
  *
- * @return: the slab where 'ptr' is allocated, NULL if 'ptr' was not allocated in the pool.
+ * @return: the slab where 'ptr' is allocated, NULL if 'ptr' was not allocated in the pool->
  */
 static struct mem_slab* is_ptr_allocated_in_pool(struct mem_slab* list_start, void* ptr) {
     struct mem_slab* current_slab = list_start;
@@ -66,11 +66,11 @@ struct slab_pool slab_pool_create(size_t allocation_size) {
 }
 
 /*
- * Returns a non-full slab from a pool. If there is no slab cache available it will allocate a new 
+ * Returns a non-full slab from a pool-> If there is no slab cache available it will allocate a new 
  * one and return it. If a NULL slab is returned the system is probably OOM.
  */
-static struct mem_slab* get_slab_with_enough_space(struct slab_pool pool) {
-    struct mem_slab* first_slab = pool.list_start;
+static struct mem_slab* get_slab_with_enough_space(struct slab_pool* pool) {
+    struct mem_slab* first_slab = pool->list_start;
 
     assert((first_slab != NULL) && "List broken");
 
@@ -80,24 +80,26 @@ static struct mem_slab* get_slab_with_enough_space(struct slab_pool pool) {
     }
 
 #ifdef CACHE_POOL_PARANOID_ENABLE_PARANOID_ASSERTS
-    int list_size_before_growing = get_list_size(pool.list_start);
+    int list_size_before_growing = get_list_size(pool->list_start);
 #endif
 
     // Create a new slab and append it to the start of the pool
-    struct mem_slab* new_first = mem_slab_create(pool.allocation_size, 0);
+    struct mem_slab* new_first = mem_slab_create(pool->allocation_size, 0);
     new_first->next = first_slab;
     first_slab->prev = new_first;
-    pool.list_start = new_first;
+    pool->list_start = new_first;
 
 #ifdef CACHE_POOL_PARANOID_ENABLE_PARANOID_ASSERTS
-    int list_size_after_growing = get_list_size(pool.list_start);
+    int list_size_after_growing = get_list_size(pool->list_start);
     assert((list_size_before_growing == list_size_after_growing - 1));
+
+    assert((first_slab != pool->list_start));
 #endif
 
     return new_first;
 }
 
-void* slab_pool_allocate(struct slab_pool pool) {
+void* slab_pool_allocate(struct slab_pool* pool) {
     struct mem_slab* slab_with_space = get_slab_with_enough_space(pool);
     assert((slab_with_space != NULL) && "NULL slab returned from get_slab_with_enough_space");
     
@@ -111,30 +113,30 @@ void* slab_pool_allocate(struct slab_pool pool) {
     // Check if the slab is full, if it is move it to the end of the caches to ensure that
     // caches with enough capacity to allocate will always be at the start.
     bool slab_full = slab_with_space->ref_count == slab_with_space->max_refs;
-    if(slab_full && (slab_with_space != pool.list_end)) {
+    if(slab_full && (slab_with_space != pool->list_end)) {
         struct mem_slab* previous = slab_with_space->prev;
         struct mem_slab* next =     slab_with_space->next;
 
         previous->next = next;
         next->prev = previous;
-        slab_with_space->prev = pool.list_end;
-        pool.list_end->next = slab_with_space;
-        pool.list_end = slab_with_space;
+        slab_with_space->prev = pool->list_end;
+        pool->list_end->next = slab_with_space;
+        pool->list_end = slab_with_space;
     }
 
     return result;
 }
 
-bool slab_pool_deallocate(struct slab_pool pool, void* ptr) {
-    struct mem_slab* slab = is_ptr_allocated_in_pool(pool.list_start, ptr);
+bool slab_pool_deallocate(struct slab_pool* pool, void* ptr) {
+    struct mem_slab* slab = is_ptr_allocated_in_pool(pool->list_start, ptr);
     
     // If the pointer was not allocated on any slab then simply return false.
     if(slab == NULL)
         return false;
 
     // If the slab is not already at the start of the pool, move it to the start.
-    if(slab != pool.list_start) {
-        struct mem_slab* list_start = pool.list_start;
+    if(slab != pool->list_start) {
+        struct mem_slab* list_start = pool->list_start;
         struct mem_slab* previous = slab->prev;
         struct mem_slab* next = slab->next;
 
@@ -143,9 +145,9 @@ bool slab_pool_deallocate(struct slab_pool pool, void* ptr) {
         list_start->prev = slab;
         slab->prev = NULL;
         slab->next = list_start;
-        pool.list_start = slab;
+        pool->list_start = slab;
     }
 
-    mem_slab_dealloc(pool.list_start, ptr);
+    mem_slab_dealloc(pool->list_start, ptr);
     return true;
 }

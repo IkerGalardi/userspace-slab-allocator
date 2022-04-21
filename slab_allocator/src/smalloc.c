@@ -41,7 +41,7 @@ void* smalloc(size_t size) {
         // NOTE: Assumes that the chache configuration sizes are sorted.
         if(size <= pools[i].allocation_size) {
             // TODO: error checking. The slab pool can return NULL when out of memory.
-            return slab_pool_allocate(pools[i]);
+            return slab_pool_allocate(pools + i);
         }
     }
 
@@ -54,7 +54,7 @@ void sfree(void* ptr) {
     assert((ptr != NULL) && "Passed pointer should be a valid pointer");
 
     for(int i = 0; i < SMALLOC_CACHE_COUNT; i++) {
-        if(slab_pool_deallocate(pools[i], ptr)) {
+        if(slab_pool_deallocate(pools + i, ptr)) {
             // When the pool deallocation returns true the ptr was in the cache, so we can return
             // from the function.
             return;
