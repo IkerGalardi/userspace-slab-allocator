@@ -71,6 +71,8 @@ struct slab_pool slab_pool_create(size_t allocation_size) {
     result.allocation_size = allocation_size;
 
     debug("POOL: created pool of size %i\n", result.allocation_size);
+    int size = get_list_size(result.list_start);
+    debug("\t* Size of the list at the start is %i\n", size);
 
     return result;
 }
@@ -84,9 +86,14 @@ static struct mem_slab* get_slab_with_enough_space(struct slab_pool* pool) {
 
     assert((first_slab != NULL) && "List broken");
 
+    int size = get_list_size(pool->list_start);
+    debug("\t* Size of the list at the start is %i\n", size);
+
     // If the first slab has enough space simply return the first slab.
     if(first_slab->ref_count < first_slab->max_refs) {
         debug("\t\t * First slab already free, returning %p\n", first_slab);
+        debug("\t\t * Reference count is %i\n", first_slab->ref_count);
+        debug("\t\t * Max allocations are %i\n", first_slab->max_refs);
         return first_slab;
     }
 
