@@ -1,5 +1,10 @@
 #include "cache_pool.h"
 
+#include <assert.h>
+#include <stdio.h>
+
+#define CACHE_POOL_PARANOID_ENABLE_PARANOID_ASSERTS
+
 /*
  * Returns the pointer to the start of the page given a pointer.
  *
@@ -34,6 +39,21 @@ static struct mem_slab* is_ptr_allocated_in_pool(struct mem_slab* list_start, vo
     return NULL;
 }
 
+/*
+ * Returns the size of the slab list
+ */
+static int get_list_size(struct mem_slab* list_start) {
+    struct mem_slab* current = list_start;
+    int jumps = 0;
+
+    while(current != NULL) {
+        jumps++;
+        current = current->next;
+    }
+
+    return jumps;
+}
+
 struct slab_pool slab_pool_create(size_t allocation_size) {
     struct mem_slab* first_slab = mem_slab_create(allocation_size, 0);
 
@@ -52,10 +72,16 @@ struct slab_pool slab_pool_create(size_t allocation_size) {
 static struct mem_slab* get_slab_with_enough_space(struct slab_pool pool) {
     struct mem_slab* first_slab = pool.list_start;
 
+    assert((first_slab != NULL) && "List broken");
+
     // If the first slab has enough space simply return the first slab.
     if(first_slab->ref_count < first_slab->max_refs) {
         return first_slab;
     }
+
+#ifdef CACHE_POOL_PARANOID_ENABLE_PARANOID_ASSERTS
+    int list_size_before_growing = get_list_size(pool.list_start);
+#endif
 
     // Create a new slab and append it to the start of the pool
     struct mem_slab* new_first = mem_slab_create(pool.allocation_size, 0);
@@ -63,14 +89,24 @@ static struct mem_slab* get_slab_with_enough_space(struct slab_pool pool) {
     new_first->next = first_slab;
     pool.list_start = new_first;
 
+#ifdef CACHE_POOL_PARANOID_ENABLE_PARANOID_ASSERTS
+    int list_size_after_growing = get_list_size(pool.list_start);
+    assert((list_size_after_growing == list_size_after_growing - 1) && "Growing wrongly");
+#endif
+
     return new_first;
 }
 
 void* slab_pool_allocate(struct slab_pool pool) {
     struct mem_slab* slab_with_space = get_slab_with_enough_space(pool);
+    assert((slab_with_space != NULL) && "NULL slab returned from get_slab_with_enough_space");
     
     // Allocate the pointer to be returned
     void* result = mem_slab_alloc(slab_with_space);
+
+#ifdef CACHE_POOL_PARANOID_ENABLE_PARANOID_ASSERTS
+    assert((result != NULL) && "Slab full when it should not");
+#endif
 
     // Check if the slab is full, if it is move it to the end of the caches to ensure that
     // caches with enough capacity to allocate will always be at the start.
