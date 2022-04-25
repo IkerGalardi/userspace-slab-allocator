@@ -83,6 +83,7 @@ struct slab_pool slab_pool_create(size_t allocation_size) {
  */
 static struct mem_slab* get_slab_with_enough_space(struct slab_pool* pool) {
     struct mem_slab* first_slab = pool->list_start;
+    debug("\t* First slab of the list is %p\n", first_slab);
 
     assert((first_slab != NULL) && "List broken");
 
@@ -143,16 +144,19 @@ void* slab_pool_allocate(struct slab_pool* pool) {
         struct mem_slab* previous = slab_with_space->prev;
         struct mem_slab* next =     slab_with_space->next;
 
-        // If we are moving the first of the list we need to update pointer to the first.
+        // Remove the node from the list. If the node is the first, then update the pointer to
+        // the first node.
         if(previous == NULL) {
+            next->prev = NULL;
             pool->list_start = next;
         } else {
             previous->next = next;
+            next->prev = previous;
         }
 
-        next->prev = previous;
-        slab_with_space->prev = pool->list_end;
+        // Append the node to the end of the list
         pool->list_end->next = slab_with_space;
+        slab_with_space->prev = pool->list_end;
         pool->list_end = slab_with_space;
     }
 
