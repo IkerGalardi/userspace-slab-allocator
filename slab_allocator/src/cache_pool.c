@@ -143,8 +143,12 @@ void* slab_pool_allocate(struct slab_pool* pool) {
         struct mem_slab* previous = slab_with_space->prev;
         struct mem_slab* next =     slab_with_space->next;
 
-        if(previous != NULL)
+        // If we are moving the first of the list we need to update pointer to the first.
+        if(previous == NULL) {
+            pool->list_start = next;
+        } else {
             previous->next = next;
+        }
 
         next->prev = previous;
         slab_with_space->prev = pool->list_end;
