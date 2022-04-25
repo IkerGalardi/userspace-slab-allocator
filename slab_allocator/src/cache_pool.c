@@ -4,7 +4,7 @@
 #include <stdio.h>
 
 #define POOL_CONFIG_PARANOID_ASSERTS
-#define POOL_CONFIG_DEBUG
+//#define POOL_CONFIG_DEBUG
 
 
 #ifdef POOL_CONFIG_DEBUG
@@ -184,11 +184,18 @@ bool slab_pool_deallocate(struct slab_pool* pool, void* ptr) {
         struct mem_slab* previous = slab->prev;
         struct mem_slab* next = slab->next;
 
-        previous->next = next;
-        next->prev = previous;
-        list_start->prev = slab;
-        slab->prev = NULL;
+        // Remove node from the list
+        if(next == NULL) {
+            previous->next = NULL;
+        } else {
+            previous->next = next;
+            next->prev = previous;
+        }
+
+        // Insert the node at the start of the list
         slab->next = list_start;
+        slab->prev = NULL;
+        list_start->prev = slab;
         pool->list_start = slab;
     }
 
