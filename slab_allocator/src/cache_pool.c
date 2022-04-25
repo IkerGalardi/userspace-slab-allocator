@@ -158,6 +158,7 @@ void* slab_pool_allocate(struct slab_pool* pool) {
         pool->list_end->next = slab_with_space;
         slab_with_space->prev = pool->list_end;
         pool->list_end = slab_with_space;
+        slab_with_space->next = NULL;
     }
 
     debug("\t* Returning\n"); 
