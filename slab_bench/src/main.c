@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <stdbool.h>
 #include <time.h>
+#include <string.h>
 
 #include <slab.h>
 #include <smalloc.h>
@@ -44,21 +45,32 @@ void do_allocations_in_loop(int count, int alloc_size, malloc_function mf, free_
     printf("%i", nanosecs);
 }
 
-static void do_and_print_benchmark_for_size(size_t size) {
+static void do_and_print_benchmark_for_size(size_t size, malloc_function mf, free_function ff) {
     printf("\n%i,", size);
-    do_allocations_in_loop(BENCH_NUMBER_OF_ALLOCATIONS, size, malloc, free);
-    printf(",");
-    do_allocations_in_loop(BENCH_NUMBER_OF_ALLOCATIONS, size, smalloc, sfree);
+    do_allocations_in_loop(BENCH_NUMBER_OF_ALLOCATIONS, size, mf, ff);
 }
 
-int main() {
+int main(int argc, char** argv) {
+    if(argc != 2) {
+        fprintf(stderr, "Wrong usage: ./bench <system|slab>\n");
+        exit(1);
+    }
+
     smalloc_initialize();
 
-    printf("Alloc size,System malloc,System free,Slabbed malloc,Slabbed free");    
-    do_and_print_benchmark_for_size(4);   
-    do_and_print_benchmark_for_size(16);   
-    do_and_print_benchmark_for_size(32);   
-    do_and_print_benchmark_for_size(128);   
-    do_and_print_benchmark_for_size(512);   
+    printf("Alloc size,Allocation times,Deallocation times");    
+    if(strcmp(argv[1], "system") == 0) {
+        do_and_print_benchmark_for_size(4, malloc, free);   
+        do_and_print_benchmark_for_size(16, malloc, free);
+        do_and_print_benchmark_for_size(32, malloc, free);
+        do_and_print_benchmark_for_size(128, malloc, free);   
+        do_and_print_benchmark_for_size(512, malloc, free);   
+    } else if(strcmp(argv[1], "slab") == 0){
+        do_and_print_benchmark_for_size(4, smalloc, sfree);   
+        do_and_print_benchmark_for_size(16, smalloc, sfree);
+        do_and_print_benchmark_for_size(32, smalloc, sfree);
+        do_and_print_benchmark_for_size(128, smalloc, sfree);   
+        do_and_print_benchmark_for_size(512, smalloc, sfree);   
+    }
     printf("\n");
 }
