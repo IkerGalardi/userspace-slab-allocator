@@ -62,7 +62,7 @@ def plot_speed_comparisons(data):
     # Add some text for labels, title and custom x-axis tick labels, etc.
     ax.set_ylabel('Execution time (ns)')
     ax.set_xlabel('Allocation size (bytes)')
-    ax.set_title('Acceleration factors')
+    ax.set_title('Speed comparison')
     ax.set_xticks(x, labels)
     ax.legend()
 
