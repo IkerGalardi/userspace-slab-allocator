@@ -3,7 +3,7 @@
 #include <assert.h>
 #include <stdio.h>
 
-#define POOL_CONFIG_PARANOID_ASSERTS
+//#define POOL_CONFIG_PARANOID_ASSERTS
 //#define POOL_CONFIG_DEBUG
 
 
@@ -70,9 +70,11 @@ struct slab_pool slab_pool_create(size_t allocation_size) {
     result.list_end = first_slab;
     result.allocation_size = allocation_size;
 
+#ifdef POOL_CONFIG_DEBUG
     debug("POOL: created pool of size %i\n", result.allocation_size);
     int size = get_list_size(result.list_start);
     debug("\t* Size of the list at the start is %i\n", size);
+#endif // POOL_CONFIG_DEBUG
 
     return result;
 }
@@ -87,8 +89,10 @@ static struct mem_slab* get_slab_with_enough_space(struct slab_pool* pool) {
 
     assert((first_slab != NULL) && "List broken");
 
+#ifdef POOL_CONFIG_DEBUG
     int size = get_list_size(pool->list_start);
     debug("\t* Size of the list at the start is %i\n", size);
+#endif // POOL_CONFIG_DEBUG
 
     // If the first slab has enough space simply return the first slab.
     if(first_slab->ref_count < first_slab->max_refs) {
