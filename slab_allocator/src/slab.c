@@ -2,12 +2,13 @@
 
 #include <stddef.h>
 #include <stdint.h>
-#include <assert.h>
 #include <stdio.h>
 #include <errno.h>
 #include <stdbool.h>
 
 #include <sys/mman.h>
+
+#include "internal_assert.h"
 
 #define PAGE_SIZE 4 * 1024
 

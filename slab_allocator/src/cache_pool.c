@@ -1,7 +1,8 @@
 #include "cache_pool.h"
 
-#include <assert.h>
 #include <stdio.h>
+
+#include "internal_assert.h"
 
 //#define POOL_CONFIG_PARANOID_ASSERTS
 //#define POOL_CONFIG_DEBUG
