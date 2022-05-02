@@ -172,7 +172,13 @@ void* slab_pool_allocate(struct slab_pool* pool) {
 
 bool slab_pool_deallocate(struct slab_pool* pool, void* ptr) {
     debug("POOL: deallocating pointer %p\n", ptr);
-    struct mem_slab* slab = is_ptr_allocated_in_pool(pool->list_start, ptr);
+
+    // Fast path. If there is no magic number or the size is not the same, then we simply return that the pointer
+    // was not allocater on this pool.
+    struct mem_slab* slab = get_page_pointer(ptr);
+    if(slab->slab_magic != SLAB_MAGIC_NUMBER || slab->size != pool->allocation_size) {
+        return false;
+    }
 
     debug("\t* Slab containing pointer is %p\n", slab);
     

@@ -21,6 +21,17 @@
 #define SMALLOC_CACHE_COUNT 4
 struct slab_pool pools[SMALLOC_CACHE_COUNT];
 
+/*
+ * Returns the pointer to the start of the page given a pointer.
+ *
+ * @param ptr: pointer to find the start of the page
+ * @return: pointer to the start of the page of 'ptr'
+ */
+static void* get_page_pointer(void* ptr) {
+    // NOTE: assumes 4k pages. maybe some way to detect 16k pages?
+    return (void*)((uintptr_t)ptr & (~0xFFF));
+}
+
 void smalloc_initialize() {
     // NOTE: editing this array will change the cache configuration of smalloc
     size_t cache_sizes[SMALLOC_CACHE_COUNT] = { 8, 16, 24, 32 };
@@ -53,6 +64,13 @@ void* smalloc(size_t size) {
 void sfree(void* ptr) {
     assert((ptr != NULL) && "Passed pointer should be a valid pointer");
 
+    // Fast path. If the pointer was not allocated in a slab we simply free and return.
+    struct mem_slab* slab = get_page_pointer(ptr);
+    if(slab->slab_magic != SLAB_MAGIC_NUMBER) {
+        free(ptr);
+        return;
+    }
+
     for(int i = 0; i < SMALLOC_CACHE_COUNT; i++) {
         if(slab_pool_deallocate(pools + i, ptr)) {
             // When the pool deallocation returns true the ptr was in the cache, so we can return
@@ -61,7 +79,5 @@ void sfree(void* ptr) {
         }
     }
 
-    // If this point is reached, means that the pointer was not allocated on any
-    // cache. 
-    free(ptr);
+    assert((false) && "This point should not be reached");
 }

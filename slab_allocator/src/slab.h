@@ -3,8 +3,12 @@
 
 #include <stdint.h>
 
+#define SLAB_MAGIC_NUMBER 0x51ABA110CA704FFF
+
 // TODO: add multi threaded lock stuff
 struct mem_slab {
+    uint64_t slab_magic;
+
     // Size of the allocations in the cache.
     int size;
 
