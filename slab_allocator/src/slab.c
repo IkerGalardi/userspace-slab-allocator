@@ -102,6 +102,7 @@ struct mem_slab* mem_slab_create(int size, int alignment) {
 
     debug("\t * Got pointer %p from kernel\n", result);
 
+    result->slab_magic = SLAB_MAGIC_NUMBER;
     result->ref_count = 0;
     result->size = size;
     result->alignment = alignment;
