@@ -10,8 +10,6 @@
 #include <slab.h>
 #include <smalloc.h>
 
-#define BENCH_NUMBER_OF_ALLOCATIONS 10000
-
 typedef void*(*malloc_function)(size_t);
 typedef void(*free_function)(void*);
 
@@ -48,9 +46,9 @@ void do_allocations_in_loop(int count, int alloc_size, malloc_function mf, free_
     printf("%i", nanosecs);
 }
 
-static void do_and_print_benchmark_for_size(size_t size, malloc_function mf, free_function ff) {
+static void do_and_print_benchmark_for_size(size_t size, malloc_function mf, free_function ff, size_t alloc_count) {
     printf("%i,", size);
-    do_allocations_in_loop(BENCH_NUMBER_OF_ALLOCATIONS, size, mf, ff);
+    do_allocations_in_loop(alloc_count, size, mf, ff);
     printf("\n");
 }
 
@@ -58,6 +56,7 @@ struct benchmark_settings {
     size_t allocation_size;
     malloc_function mf;
     free_function ff;
+    size_t allocation_count;
 };
 
 struct benchmark_settings get_settings_from_argv(int argc, char** argv) {
@@ -65,8 +64,9 @@ struct benchmark_settings get_settings_from_argv(int argc, char** argv) {
 
     bool has_functions = false;
     bool has_size = false;
+    bool has_count = false;
     int option = 0;
-    while((option = getopt(argc, argv, "t:s:")) != -1) {
+    while((option = getopt(argc, argv, "t:s:c:")) != -1) {
         switch(option) {
             case 't':
                 if(strcmp(optarg, "system") == 0) {
@@ -86,6 +86,10 @@ struct benchmark_settings get_settings_from_argv(int argc, char** argv) {
                 settings.allocation_size = atoi(optarg);
                 has_size = true;
                 break;
+
+            case 'c':
+                settings.allocation_count = atoi(optarg);
+                has_count = true;
         }
     }
 
@@ -96,8 +100,12 @@ struct benchmark_settings get_settings_from_argv(int argc, char** argv) {
     if(has_size == false) {
         fprintf(stderr, "error: Forgot to specify size (-s <size>)\n");
     }
+
+    if(has_count == false) {
+        fprintf(stderr, "error: Forgot to specify allocation count (-c <count>)\n");
+    }
     
-    if(has_functions == false || has_size == false) {
+    if(has_functions == false || has_size == false || has_count == false) {
         exit(1);
     }
 
@@ -109,5 +117,5 @@ int main(int argc, char** argv) {
 
     smalloc_initialize();
 
-    do_and_print_benchmark_for_size(settings.allocation_size, settings.mf, settings.ff);
+    do_and_print_benchmark_for_size(settings.allocation_size, settings.mf, settings.ff, settings.allocation_count);
 }
