@@ -63,6 +63,28 @@ static int get_list_size(struct mem_slab* list_start) {
     return jumps;
 }
 
+static void move_slab_to_end_of_the_list(struct slab_pool* pool, struct mem_slab* slab) {
+    struct mem_slab* previous = slab->prev;
+    struct mem_slab* next =     slab->next;
+
+    // Remove the node from the list. If the node is the first, then update the pointer to
+    // the first node.
+    if(previous == NULL) {
+        next->prev = NULL;
+        pool->list_start = next;
+    } else {
+        previous->next = next;
+        next->prev = previous;
+    }
+
+    // Append the node to the end of the list
+    pool->list_end->next = slab;
+    slab->prev = pool->list_end;
+    pool->list_end = slab;
+    slab->next = NULL;
+
+}
+
 struct slab_pool slab_pool_create(size_t allocation_size) {
     struct mem_slab* first_slab = mem_slab_create(allocation_size, 0);
 
@@ -146,24 +168,8 @@ void* slab_pool_allocate(struct slab_pool* pool) {
     debug("\t* Slab full? %i\n", slab_full); 
     if(slab_full && (slab_with_space != pool->list_end)) {
         debug("\t* Moving the slab to the end of the cache\n"); 
-        struct mem_slab* previous = slab_with_space->prev;
-        struct mem_slab* next =     slab_with_space->next;
 
-        // Remove the node from the list. If the node is the first, then update the pointer to
-        // the first node.
-        if(previous == NULL) {
-            next->prev = NULL;
-            pool->list_start = next;
-        } else {
-            previous->next = next;
-            next->prev = previous;
-        }
-
-        // Append the node to the end of the list
-        pool->list_end->next = slab_with_space;
-        slab_with_space->prev = pool->list_end;
-        pool->list_end = slab_with_space;
-        slab_with_space->next = NULL;
+        move_slab_to_end_of_the_list(pool, slab_with_space);
     }
 
     debug("\t* Returning\n"); 

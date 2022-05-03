@@ -4,7 +4,7 @@
 // Doing this in order to remove unnecessary function calls inside the allocator. Those
 // functions are called in order to check the correct functioning of the allocator, but
 // are not necessary in release builds.
-#ifdef SLAB_DEBUG
+#ifdef DEBUG_ASSERTS
     #include <assert.h>
 #else
     #define assert(x)
