@@ -3,6 +3,9 @@
 #include <stdbool.h>
 #include <time.h>
 #include <string.h>
+#include <unistd.h>
+
+#include <valgrind/callgrind.h>
 
 #include <slab.h>
 #include <smalloc.h>
@@ -46,31 +49,65 @@ void do_allocations_in_loop(int count, int alloc_size, malloc_function mf, free_
 }
 
 static void do_and_print_benchmark_for_size(size_t size, malloc_function mf, free_function ff) {
-    printf("\n%i,", size);
+    printf("%i,", size);
     do_allocations_in_loop(BENCH_NUMBER_OF_ALLOCATIONS, size, mf, ff);
+    printf("\n");
 }
 
-int main(int argc, char** argv) {
-    if(argc != 2) {
-        fprintf(stderr, "Wrong usage: ./bench <system|slab>\n");
+struct benchmark_settings {
+    size_t allocation_size;
+    malloc_function mf;
+    free_function ff;
+};
+
+struct benchmark_settings get_settings_from_argv(int argc, char** argv) {
+    struct benchmark_settings settings;
+
+    bool has_functions = false;
+    bool has_size = false;
+    int option = 0;
+    while((option = getopt(argc, argv, "t:s:")) != -1) {
+        switch(option) {
+            case 't':
+                if(strcmp(optarg, "system") == 0) {
+                    settings.mf = malloc;
+                    settings.ff = free;
+                } else if(strcmp(optarg, "slab") == 0) {
+                    settings.mf = smalloc;
+                    settings.ff = sfree;
+                } else {
+                    fprintf(stderr, "error: Unknown allocator type %s\n", optarg);
+                    exit(1);
+                }
+                has_functions = true;
+                break;
+
+            case 's':
+                settings.allocation_size = atoi(optarg);
+                has_size = true;
+                break;
+        }
+    }
+
+    if(has_functions == false) {
+        fprintf(stderr, "error: Forgot to specify what allocator to test (-t <system/slab>)\n");
+    }
+
+    if(has_size == false) {
+        fprintf(stderr, "error: Forgot to specify size (-s <size>)\n");
+    }
+    
+    if(has_functions == false || has_size == false) {
         exit(1);
     }
 
+    return settings;
+}
+
+int main(int argc, char** argv) {
+    struct benchmark_settings settings = get_settings_from_argv(argc, argv);
+
     smalloc_initialize();
 
-    printf("Alloc size,Allocation times,Deallocation times");    
-    if(strcmp(argv[1], "system") == 0) {
-        do_and_print_benchmark_for_size(4, malloc, free);   
-        do_and_print_benchmark_for_size(16, malloc, free);
-        do_and_print_benchmark_for_size(32, malloc, free);
-        do_and_print_benchmark_for_size(128, malloc, free);   
-        do_and_print_benchmark_for_size(512, malloc, free);   
-    } else if(strcmp(argv[1], "slab") == 0){
-        do_and_print_benchmark_for_size(4, smalloc, sfree);   
-        do_and_print_benchmark_for_size(16, smalloc, sfree);
-        do_and_print_benchmark_for_size(32, smalloc, sfree);
-        do_and_print_benchmark_for_size(128, smalloc, sfree);   
-        do_and_print_benchmark_for_size(512, smalloc, sfree);   
-    }
-    printf("\n");
+    do_and_print_benchmark_for_size(settings.allocation_size, settings.mf, settings.ff);
 }
