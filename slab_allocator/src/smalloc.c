@@ -8,6 +8,7 @@
 #include "slab_pool.h"
 #include "internal_assert.h"
 
+// TODO: take this from the kernel or something. Pages can actually be 16k depending on the platform.
 #define PAGE_SIZE 1024 * 4
 
 //#define SMALLOC_CONFIG_DEBUG
@@ -48,10 +49,9 @@ void* smalloc(size_t size) {
     debug("SMALLOC: Allocation of size %i\n", size);
 
     // Find a suitable cache and try to allocate on it.
+    // NOTE: Assumes that the chache configuration sizes are sorted.
     for(int i = 0; i < SMALLOC_CACHE_COUNT; i++) {
-        // NOTE: Assumes that the chache configuration sizes are sorted.
         if(size <= pools[i].allocation_size) {
-            // TODO: error checking. The slab pool can return NULL when out of memory.
             return slab_pool_allocate(pools + i);
         }
     }
