@@ -7,6 +7,7 @@
 
 // TODO: add multi threaded lock stuff
 struct mem_slab {
+    // Magic number, should always be SLAB_MAGIC_NUMBER.
     uint64_t slab_magic;
 
     // Size of the allocations in the cache.

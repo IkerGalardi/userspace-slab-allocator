@@ -17,6 +17,7 @@
 
 #define NON_EXISTANT (uint16_t)(-1)
 
+// State in which a slot inside a slab can be.
 #define SLOT_FREE 0
 #define SLOT_BUSY 1
 
@@ -36,14 +37,16 @@
 
 // TODO: is packed okay???
 struct slab_bufctl {
-    // Linked list stuff
     uint16_t next_index;
     uint16_t prev_index;
 
-    // To note if the buffer is free: 0 if its free and 1 if not.
+    // To note if the buffer is free: can be SLOT_FREE or SLOT_BUSY.
     uint8_t is_free;
 } __attribute__((packed));
 
+/*
+ * Returns the index of the buffer in the slab->allocable_buffer.
+ */
 static uint16_t get_buffer_index_from_ptr(struct mem_slab* slab, void* ptr) {
     // If the pointer is calculated with the next formula, the index should be calculated like the return statement.
     //      ptr = allocable_buffer + slab->size * index;
@@ -54,11 +57,17 @@ static uint16_t get_buffer_index_from_ptr(struct mem_slab* slab, void* ptr) {
     return (ptr - slab->allocable_buffer) / (slab->size);
 }
 
+/* 
+ * Returns true if the pointer specified is in the page specified. False otherwise.
+ */
 static bool is_ptr_in_page(const void* page, const void* ptr) {
     const void* page_end   = (const void*)((const uint8_t*)page + PAGE_SIZE);
     return (ptr > page) && (page_end > ptr);
 }
 
+/*
+ * Prints the freelist state if SLAB_CONFIG_DEBUG_FREELIST is define.
+ */
 static void print_freelist_if_enabled(struct mem_slab* slab) {
 #ifdef SLAB_CONFIG_DEBUG_FREELIST
     debug("\t * Freelist state:\n");
@@ -91,7 +100,6 @@ struct mem_slab* mem_slab_create(int size, int alignment) {
     assert((alignment >= 0) && "Alignment must be bigger than 0");
 
     debug("SLAB: creating new cache...\n");
-    // NOTE: important that MAP_PRIVATE or MAP_SHARED is added as flag or no valid memory is going to be returned by the kernel.
     struct mem_slab* result = (struct mem_slab*)mmap(NULL, PAGE_SIZE, PROT_READ | PROT_WRITE, MAP_ANONYMOUS | MAP_PRIVATE, -1, 0);
     
     // Linux returns -1 as address when no memory is mapped. If that happens return NULL and user should take care of that.
