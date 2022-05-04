@@ -8,9 +8,6 @@
 #include "slab_pool.h"
 #include "internal_assert.h"
 
-// TODO: take this from the kernel or something. Pages can actually be 16k depending on the platform.
-#define PAGE_SIZE 1024 * 4
-
 //#define SMALLOC_CONFIG_DEBUG
 
 #ifdef SMALLOC_CONFIG_DEBUG
