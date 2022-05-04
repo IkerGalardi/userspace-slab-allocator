@@ -1,4 +1,4 @@
-#include "cache_pool.h"
+#include "slab_pool.h"
 
 #include <stdio.h>
 
@@ -49,7 +49,7 @@ static struct mem_slab* is_ptr_allocated_in_pool(struct mem_slab* list_start, vo
 }
 
 /*
- * Returns the size of the slab list
+ * Returns the size of the slab list. Only for debugging purposes.
  */
 static int get_list_size(struct mem_slab* list_start) {
     struct mem_slab* current = list_start;
@@ -63,6 +63,9 @@ static int get_list_size(struct mem_slab* list_start) {
     return jumps;
 }
 
+/*
+ * Moves a slab to the end of the pool, updating the list_start and list_end if necessary.
+ */
 static void move_slab_to_end_of_the_list(struct slab_pool* pool, struct mem_slab* slab) {
     struct mem_slab* previous = slab->prev;
     struct mem_slab* next =     slab->next;

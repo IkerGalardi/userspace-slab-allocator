@@ -5,18 +5,20 @@
 #include <stdio.h>
 #include <errno.h>
 #include <stdbool.h>
+#include <unistd.h>
 
 #include <sys/mman.h>
 
 #include "internal_assert.h"
 
-#define PAGE_SIZE 4 * 1024
+#define SLAB_PAGE_SIZE sysconf(_SC_PAGESIZE)
 
 //#define SLAB_CONFIG_DEBUG
 //#define SLAB_CONFIG_DEBUG_FREELIST
 
 #define NON_EXISTANT (uint16_t)(-1)
 
+// State in which a slot inside a slab can be.
 #define SLOT_FREE 0
 #define SLOT_BUSY 1
 
@@ -36,14 +38,16 @@
 
 // TODO: is packed okay???
 struct slab_bufctl {
-    // Linked list stuff
     uint16_t next_index;
     uint16_t prev_index;
 
-    // To note if the buffer is free: 0 if its free and 1 if not.
+    // To note if the buffer is free: can be SLOT_FREE or SLOT_BUSY.
     uint8_t is_free;
 } __attribute__((packed));
 
+/*
+ * Returns the index of the buffer in the slab->allocable_buffer.
+ */
 static uint16_t get_buffer_index_from_ptr(struct mem_slab* slab, void* ptr) {
     // If the pointer is calculated with the next formula, the index should be calculated like the return statement.
     //      ptr = allocable_buffer + slab->size * index;
@@ -54,11 +58,17 @@ static uint16_t get_buffer_index_from_ptr(struct mem_slab* slab, void* ptr) {
     return (ptr - slab->allocable_buffer) / (slab->size);
 }
 
+/* 
+ * Returns true if the pointer specified is in the page specified. False otherwise.
+ */
 static bool is_ptr_in_page(const void* page, const void* ptr) {
-    const void* page_end   = (const void*)((const uint8_t*)page + PAGE_SIZE);
+    const void* page_end   = (const void*)((const uint8_t*)page + SLAB_PAGE_SIZE);
     return (ptr > page) && (page_end > ptr);
 }
 
+/*
+ * Prints the freelist state if SLAB_CONFIG_DEBUG_FREELIST is define.
+ */
 static void print_freelist_if_enabled(struct mem_slab* slab) {
 #ifdef SLAB_CONFIG_DEBUG_FREELIST
     debug("\t * Freelist state:\n");
@@ -91,8 +101,7 @@ struct mem_slab* mem_slab_create(int size, int alignment) {
     assert((alignment >= 0) && "Alignment must be bigger than 0");
 
     debug("SLAB: creating new cache...\n");
-    // NOTE: important that MAP_PRIVATE or MAP_SHARED is added as flag or no valid memory is going to be returned by the kernel.
-    struct mem_slab* result = (struct mem_slab*)mmap(NULL, PAGE_SIZE, PROT_READ | PROT_WRITE, MAP_ANONYMOUS | MAP_PRIVATE, -1, 0);
+    struct mem_slab* result = (struct mem_slab*)mmap(NULL, SLAB_PAGE_SIZE, PROT_READ | PROT_WRITE, MAP_ANONYMOUS | MAP_PRIVATE, -1, 0);
     
     // Linux returns -1 as address when no memory is mapped. If that happens return NULL and user should take care of that.
     if(result == (void*)-1) {
@@ -113,8 +122,8 @@ struct mem_slab* mem_slab_create(int size, int alignment) {
     debug("\t * Freelist buffer at %p\n", result->freelist_buffer);
 
     // Taking into account the next relation, we can calculate the number of buffers that can be saved on a page:
-    //          sizeof(mem_slab) + num_buffers * (buff_size * sizeof(bufctl)) = PAGE_SIZE
-    int num_buffers = (PAGE_SIZE - sizeof(struct mem_slab))/(size * sizeof(struct slab_bufctl));
+    //          sizeof(mem_slab) + num_buffers * (buff_size * sizeof(bufctl)) = SLAB_PAGE_SIZE
+    int num_buffers = (SLAB_PAGE_SIZE - sizeof(struct mem_slab))/(size * sizeof(struct slab_bufctl));
     debug("\t * %i allocations available on this cache\n", num_buffers);
 
 
@@ -139,7 +148,7 @@ struct mem_slab* mem_slab_create(int size, int alignment) {
     result->allocable_buffer = result->freelist_buffer + num_buffers;
 
     debug("\t * Slots start at %p\n", result->allocable_buffer);
-    debug("\t * Page ends at %p\n", ((uint8_t*)(result) + PAGE_SIZE));
+    debug("\t * Page ends at %p\n", ((uint8_t*)(result) + SLAB_PAGE_SIZE));
 
     print_freelist_if_enabled(result);
 
@@ -150,7 +159,7 @@ void mem_slab_free(struct mem_slab* slab) {
     assert((slab != NULL));
     assert((slab->ref_count == 0) && "Can't free the slab if objects are allocated");
 
-    munmap((void*)slab, PAGE_SIZE);
+    munmap((void*)slab, SLAB_PAGE_SIZE);
 
     debug("SLAB: freed page at %p\n", slab);
 }
