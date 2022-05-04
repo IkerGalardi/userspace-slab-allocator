@@ -6,8 +6,10 @@
 // are not necessary in release builds.
 #ifdef DEBUG_ASSERTS
     #include <assert.h>
+    #define assert_not_reached() assert((false))
 #else
     #define assert(x)
+    #define assert_not_reached()
 #endif // SLAB_DEBUG
 
 #endif // INTERNAL_ASSERT_H

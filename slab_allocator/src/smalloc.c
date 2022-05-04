@@ -79,5 +79,5 @@ void sfree(void* ptr) {
         }
     }
 
-    assert((false) && "This point should not be reached");
+    assert_not_reached();
 }
