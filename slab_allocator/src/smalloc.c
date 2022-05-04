@@ -5,7 +5,7 @@
 #include <stdbool.h>
 
 #include "slab.h"
-#include "cache_pool.h"
+#include "slab_pool.h"
 #include "internal_assert.h"
 
 #define PAGE_SIZE 1024 * 4
