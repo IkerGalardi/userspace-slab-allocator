@@ -11,7 +11,7 @@
     #define deallocate(x) free(x)
 #endif // USE_SMALLOC
 
-#define ITERATION_COUNT 500
+#define ITERATION_COUNT 1000
 #define ALLOCATION_COUNT 100000
 
 int main() {
