@@ -13,7 +13,7 @@
     #define deallocate(x) free(x)
 #endif // USE_SMALLOC
 
-#define ITERATION_COUNT 10000000000
+#define ITERATION_COUNT 400000000
 #define MAX_ALLOCATIONS 100000
 
 struct pointer_array {
