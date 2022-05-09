@@ -4,13 +4,16 @@ mkdir -p bin
 
 FLAGS="-O2 -I../slab_allocator/src -L../slab_allocator -lslaballocator"
 
-echo "SIMPLE SINTHETIC BENCHMARK"
+echo "RANDOM SIZE, FIFO FREE, SYNTHETIC"
 echo "  · glibc allocator"
-gcc simple_synthetic.c -o bin/simple_synthetic $FLAGS
-time ./bin/simple_synthetic
+time ./bin/randomsize_fifo_synthetic || exit
 
 echo "  · slabed allocator"
-gcc simple_synthetic.c -o bin/simple_synthetic -DUSE_SMALLOC $FLAGS
-time ./bin/simple_synthetic
+time ./bin/randomsize_fifo_synthetic_smalloc || exit
 
+echo "RANDOM ALLOC/FREE, SYNTHETIC"
+echo "  · glibc allocator"
+time ./bin/randomalloc_synthetic || exit
 
+echo "  · slabed allocator"
+time ./bin/randomalloc_synthetic_smalloc || exit
