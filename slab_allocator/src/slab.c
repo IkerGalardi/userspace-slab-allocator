@@ -48,7 +48,7 @@ struct slab_bufctl {
 /*
  * Returns the index of the buffer in the slab->allocable_buffer.
  */
-static uint16_t get_buffer_index_from_ptr(struct mem_slab* slab, void* ptr) {
+static inline uint16_t get_buffer_index_from_ptr(struct mem_slab* slab, void* ptr) {
     // If the pointer is calculated with the next formula, the index should be calculated like the return statement.
     //      ptr = allocable_buffer + slab->size * index;
     //                        |
@@ -61,16 +61,15 @@ static uint16_t get_buffer_index_from_ptr(struct mem_slab* slab, void* ptr) {
 /* 
  * Returns true if the pointer specified is in the page specified. False otherwise.
  */
-static bool is_ptr_in_page(const void* page, const void* ptr) {
-    const void* page_end   = (const void*)((const uint8_t*)page + SLAB_PAGE_SIZE);
+static inline bool is_ptr_in_page(const void* page, const void* ptr) {
+    const void* page_end = (const void*)((const uint8_t*)page + SLAB_PAGE_SIZE);
     return (ptr > page) && (page_end > ptr);
 }
 
 /*
  * Prints the freelist state if SLAB_CONFIG_DEBUG_FREELIST is define.
  */
-static void print_freelist_if_enabled(struct mem_slab* slab) {
-#ifdef SLAB_CONFIG_DEBUG_FREELIST
+static void print_freelist(struct mem_slab* slab) {
     debug("\t * Freelist state:\n");
 
     struct slab_bufctl* bufctl_array = (struct slab_bufctl*)(slab->freelist_buffer);
@@ -89,7 +88,6 @@ static void print_freelist_if_enabled(struct mem_slab* slab) {
     struct slab_bufctl current_node = bufctl_array[current_index];
     debug("\t\t * Node %i, previous = %i, next = %i, free = %i\n", 
             current_index, current_node.prev_index, current_node.next_index, current_node.is_free);
-#endif // SLAB_CONFIG_DEBUG_FREELIST
 }
 
 struct mem_slab* mem_slab_create(int size, int alignment) {
@@ -150,7 +148,9 @@ struct mem_slab* mem_slab_create(int size, int alignment) {
     debug("\t * Slots start at %p\n", result->allocable_buffer);
     debug("\t * Page ends at %p\n", ((uint8_t*)(result) + SLAB_PAGE_SIZE));
 
-    print_freelist_if_enabled(result);
+#ifdef SLAB_CONFIG_DEBUG_FREELIST
+    print_freelist(result);
+#endif // SLAB_CONFIG_DEBUG_FREELIST
 
     return result;
 }
@@ -200,7 +200,9 @@ void* mem_slab_alloc(struct mem_slab* slab) {
     // Important to mark it as busy.
     freelist_array[free_index].is_free = SLOT_BUSY;
 
-    print_freelist_if_enabled(slab);
+#ifdef SLAB_CONFIG_DEBUG_FREELIST
+    print_freelist(result);
+#endif // SLAB_CONFIG_DEBUG_FREELIST
 
     void* to_return = slab->allocable_buffer + slab->size * free_index;
     assert((is_ptr_in_page(slab, to_return)) && "Allocation pointer not inside the page cache");
@@ -259,5 +261,7 @@ void mem_slab_dealloc(struct mem_slab* slab, void* ptr) {
     debug("\t * New first in the freelist %i\n", slab->freelist_start_index);
     debug("\t * New last in the freelist %i\n", slab->freelist_end_index);
 
-    print_freelist_if_enabled(slab);
+#ifdef SLAB_CONFIG_DEBUG_FREELIST
+    print_freelist(result);
+#endif // SLAB_CONFIG_DEBUG_FREELIST
 }
