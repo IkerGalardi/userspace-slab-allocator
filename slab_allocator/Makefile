@@ -61,11 +61,11 @@ endif
 GENERATED :=
 OBJECTS :=
 
-GENERATED += $(OBJDIR)/cache_pool.o
 GENERATED += $(OBJDIR)/slab.o
+GENERATED += $(OBJDIR)/slab_pool.o
 GENERATED += $(OBJDIR)/smalloc.o
-OBJECTS += $(OBJDIR)/cache_pool.o
 OBJECTS += $(OBJDIR)/slab.o
+OBJECTS += $(OBJDIR)/slab_pool.o
 OBJECTS += $(OBJDIR)/smalloc.o
 
 # Rules
@@ -130,10 +130,10 @@ endif
 # File Rules
 # #############################################
 
-$(OBJDIR)/cache_pool.o: src/cache_pool.c
+$(OBJDIR)/slab.o: src/slab.c
 	@echo $(notdir $<)
 	$(SILENT) $(CC) $(ALL_CFLAGS) $(FORCE_INCLUDE) -o "$@" -MF "$(@:%.o=%.d)" -c "$<"
-$(OBJDIR)/slab.o: src/slab.c
+$(OBJDIR)/slab_pool.o: src/slab_pool.c
 	@echo $(notdir $<)
 	$(SILENT) $(CC) $(ALL_CFLAGS) $(FORCE_INCLUDE) -o "$@" -MF "$(@:%.o=%.d)" -c "$<"
 $(OBJDIR)/smalloc.o: src/smalloc.c
