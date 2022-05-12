@@ -13,8 +13,9 @@
 
 #define SLAB_PAGE_SIZE sysconf(_SC_PAGESIZE)
 
-//#define SLAB_CONFIG_DEBUG
-//#define SLAB_CONFIG_DEBUG_FREELIST
+#define SLAB_CONFIG_DEBUG
+#define SLAB_CONFIG_DEBUG_FREELIST
+#define SLAB_CONFIG_DEBUG_PARANOID_ASSERTS
 
 #define NON_EXISTANT (uint16_t)(-1)
 
@@ -23,7 +24,7 @@
 #define SLOT_BUSY 1
 
 #ifdef SLAB_CONFIG_DEBUG
-    #define debug(...) fprintf(stderr, __VA_ARGS__)
+    #define debug(...) fprintf(stderr, __VA_ARGS__); fflush(stderr)
 #else
     #define debug(...)
 #endif
@@ -90,11 +91,19 @@ static void print_freelist(struct mem_slab* slab) {
             current_index, current_node.prev_index, current_node.next_index, current_node.is_free);
 }
 
-struct mem_slab* mem_slab_create(int size, int alignment) {
-    debug("sizeof(header) = %i\n", sizeof(struct mem_slab));
-    debug("sizeof(bufctl) = %i\n", sizeof(struct slab_bufctl));
-    debug("sizeof(buffer) = %i\n", size);
+static size_t get_freelist_size(struct mem_slab* slab) {
+    int count = 0;
 
+    int current_index = slab->freelist_start_index;
+    struct slab_bufctl* bufctl_array = (struct slab_bufctl*)(slab->freelist_buffer);
+    while(bufctl_array[current_index].next_index != NON_EXISTANT) {
+        count++;
+    }
+    
+    return count;
+}
+
+struct mem_slab* mem_slab_create(int size, int alignment) {
     assert((size > 0) && "Slab size must be bigger than 0");
     assert((alignment >= 0) && "Alignment must be bigger than 0");
 
@@ -135,6 +144,7 @@ struct mem_slab* mem_slab_create(int size, int alignment) {
     }
     result->freelist_start_index = 0;
     result->freelist_end_index = num_buffers - 1;
+    freelist_buffer[result->freelist_start_index].prev_index = NON_EXISTANT;
     freelist_buffer[result->freelist_end_index].next_index = NON_EXISTANT;
 
     result->max_refs = num_buffers;
@@ -170,6 +180,10 @@ void* mem_slab_alloc(struct mem_slab* slab) {
 
     debug("SLAB: allocation of size %i on cache %p\n", slab->size, slab);
 
+#ifdef SLAB_CONFIG_DEBUG_PARANOID_ASSERTS
+    int start_size = get_freelist_size(slab);
+#endif // SLAB_CONFIG_DEBUG_PARANOID_ASSERTS
+
     struct slab_bufctl* freelist_array = (struct slab_bufctl*)(slab->freelist_buffer);
     int free_index = slab->freelist_start_index;
     debug("\t * Freelist start index is %i\n", free_index);
@@ -200,8 +214,14 @@ void* mem_slab_alloc(struct mem_slab* slab) {
     // Important to mark it as busy.
     freelist_array[free_index].is_free = SLOT_BUSY;
 
+
+#ifdef SLAB_CONFIG_DEBUG_PARANOID_ASSERTS
+    int after_size = get_freelist_size(slab);
+    assert((start_size == after_size) && "Freelist size changed :(");
+#endif // SLAB_CONFIG_DEBUG_PARANOID_ASSERTS
+
 #ifdef SLAB_CONFIG_DEBUG_FREELIST
-    print_freelist(result);
+    print_freelist(slab);
 #endif // SLAB_CONFIG_DEBUG_FREELIST
 
     void* to_return = slab->allocable_buffer + slab->size * free_index;
@@ -262,6 +282,6 @@ void mem_slab_dealloc(struct mem_slab* slab, void* ptr) {
     debug("\t * New last in the freelist %i\n", slab->freelist_end_index);
 
 #ifdef SLAB_CONFIG_DEBUG_FREELIST
-    print_freelist(result);
+    print_freelist(slab);
 #endif // SLAB_CONFIG_DEBUG_FREELIST
 }
