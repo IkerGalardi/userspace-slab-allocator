@@ -55,12 +55,10 @@ int main() {
     double election_threshold = 2.0;
     for(int it = 0; it < ITERATION_COUNT; it++) {
         // Randombly select if it's needed to malloc or free. 0 for free, 1 for malloc.
-        float x = ((float)pa.pointer_count) / ((float)pa.capacity);
-        double beta_random = gsl_ran_beta_pdf(x, BETA_DISTRIBUTION_ALPHA_VALUE, BETA_DISTRIBUTION_BETA_VALUE);
+        double election = 4 * (((double)(rand() % 100)) / 100.0);
 
         // If free action and there are pointers to free, do the free
-        if(beta_random > election_threshold && pa.pointer_count != 0) {
-
+        if(election < election_threshold && pa.pointer_count != 0) {
             int free_index = rand() % pa.pointer_count;
             
             void* pointer = pa.pointers[free_index];
@@ -69,21 +67,21 @@ int main() {
             pointer_array_remove(&pa, free_index);
 
         // if there aren't pointers to free, then malloc 
-        } else if(beta_random > election_threshold && pa.pointer_count == 0) {
+        } else if(election < election_threshold && pa.pointer_count == 0) {
             int index = rand() % 7;
             void* pointer = allocate(allocation_sizes[index]); 
 
             pointer_array_append(&pa, pointer);
 
         // if malloc action and enogh space on the array, then malloc
-        } else if(beta_random <= election_threshold && pa.pointer_count < pa.capacity) {
+        } else if(election >= election_threshold && pa.pointer_count < pa.capacity) {
             int index = rand() % 7;
             void* pointer = allocate(allocation_sizes[index]); 
 
             pointer_array_append(&pa, pointer);
 
         // if malloc action and not enough space then free
-        } else if(beta_random <= election_threshold && pa.pointer_count == pa.capacity-1) {
+        } else if(election >= election_threshold && pa.pointer_count == pa.capacity-1) {
             int free_index = rand() % pa.pointer_count;
             
             void* pointer = pa.pointers[free_index];
@@ -92,13 +90,7 @@ int main() {
             pointer_array_remove(&pa, free_index);
         } 
 
-        // Randomly select by how much move the election_threshold
-        int random_uniform = rand() % 100 - 50;
-        double how_much_move = ((double)random_uniform) / 60;
-
-        // Move and clamp values between 1 and 2
-        election_threshold += how_much_move;
-        election_threshold = MIN(2, election_threshold);
-        election_threshold = MAX(1, election_threshold);
+        double full_percentage = (double)pa.pointer_count / ((double)pa.capacity / 5.0);
+        election_threshold = gsl_ran_beta_pdf(full_percentage, 4, 1);
     }
 }
