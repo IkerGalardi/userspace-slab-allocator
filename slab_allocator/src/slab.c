@@ -9,12 +9,11 @@
 
 #include <sys/mman.h>
 
-#define DEBUG_ASSERTS
 #include "internal_assert.h"
 
 #define SLAB_PAGE_SIZE sysconf(_SC_PAGESIZE)
 
-#define SLAB_CONFIG_DEBUG
+//#define SLAB_CONFIG_DEBUG
 //#define SLAB_CONFIG_DEBUG_FREELIST
 //#define SLAB_CONFIG_DEBUG_PARANOID_ASSERTS
 
@@ -290,7 +289,6 @@ void mem_slab_dealloc(struct mem_slab* slab, void* ptr) {
     freelist_array[slot_index].prev_index = NON_EXISTANT;
     freelist_array[slab->freelist_start_index].prev_index = slot_index;
     slab->freelist_start_index = slot_index;
-
 
     assert((slab->freelist_start_index != NON_EXISTANT));
     assert((slab->freelist_end_index != NON_EXISTANT));

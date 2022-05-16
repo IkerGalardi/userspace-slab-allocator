@@ -70,7 +70,7 @@ static void move_slab_to_end_of_the_list(struct slab_pool* pool, struct mem_slab
     struct mem_slab* previous = slab->prev;
     struct mem_slab* next =     slab->next;
 
-    // If the only element of the list is 'slab', we don't need to do anything.
+    // If the slab is already in the end, we don't need to do anything
     if(next ==  NULL) {
         return;
     }
