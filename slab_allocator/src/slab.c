@@ -278,7 +278,7 @@ void mem_slab_dealloc(struct mem_slab* slab, void* ptr) {
     }
 
     // Remove the node from the list
-    if(freelist_array[next_index].next_index == NON_EXISTANT) {
+    if(next_index == NON_EXISTANT) {
         freelist_array[prev_index].next_index = NON_EXISTANT;
     } else {
         freelist_array[prev_index].next_index = next_index;
