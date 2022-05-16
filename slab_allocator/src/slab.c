@@ -97,6 +97,7 @@ static size_t get_freelist_size(struct mem_slab* slab) {
     int current_index = slab->freelist_start_index;
     struct slab_bufctl* bufctl_array = (struct slab_bufctl*)(slab->freelist_buffer);
     while(bufctl_array[current_index].next_index != NON_EXISTANT) {
+        current_index = bufctl_array[current_index].next_index;
         count++;
     }
     
