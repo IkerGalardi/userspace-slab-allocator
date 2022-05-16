@@ -70,6 +70,11 @@ static void move_slab_to_end_of_the_list(struct slab_pool* pool, struct mem_slab
     struct mem_slab* previous = slab->prev;
     struct mem_slab* next =     slab->next;
 
+    // If the only element of the list is 'slab', we don't need to do anything.
+    if(next ==  NULL) {
+        return;
+    }
+
     // Remove the node from the list. If the node is the first, then update the pointer to
     // the first node.
     if(previous == NULL) {
@@ -85,7 +90,6 @@ static void move_slab_to_end_of_the_list(struct slab_pool* pool, struct mem_slab
     slab->prev = pool->list_end;
     pool->list_end = slab;
     slab->next = NULL;
-
 }
 
 struct slab_pool slab_pool_create(size_t allocation_size) {
