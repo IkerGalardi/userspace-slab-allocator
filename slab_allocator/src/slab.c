@@ -198,18 +198,25 @@ void* mem_slab_alloc(struct mem_slab* slab) {
     slab->ref_count++;
     
     int free_next = freelist_array[free_index].next_index;
+    int free_prev = freelist_array[free_index].prev_index;
     debug("\t * Index %i was found free\n", free_index);
     debug("\t * Index %i is new first\n", free_next);
 
-    // When the buffer gets allocated, the freelist node is moved to the end, this way
-    // for checking if there is any available buffer we just need to check the first node
-    // of the free list.
+    // Remove the node from the list. If it's the first one, then update the freelist_start_index
+    // so that the freelist doesn't get destroyed.
+    if(freelist_array[free_index].prev_index == NON_EXISTANT) {
+        freelist_array[free_next].prev_index = NON_EXISTANT;
+        slab->freelist_start_index = free_next;
+    } else {
+        freelist_array[free_prev].next_index = free_next;
+        freelist_array[free_next].prev_index = free_prev;
+    }
+
+    // Append the node in the end of the list.
     freelist_array[slab->freelist_end_index].next_index = free_index;
     freelist_array[free_index].prev_index = slab->freelist_end_index;
-    freelist_array[free_next].prev_index = NON_EXISTANT;
-    slab->freelist_start_index = freelist_array[free_index].next_index;
-    freelist_array[free_index].next_index = NON_EXISTANT;
     slab->freelist_end_index = free_index;
+    freelist_array[free_index].next_index = NON_EXISTANT;
 
     // Important to mark it as busy.
     freelist_array[free_index].is_free = SLOT_BUSY;
