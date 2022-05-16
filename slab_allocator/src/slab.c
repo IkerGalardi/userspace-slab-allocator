@@ -232,7 +232,9 @@ void* mem_slab_alloc(struct mem_slab* slab) {
     assert((slab->freelist_end_index != NON_EXISTANT));
 
 #ifdef SLAB_CONFIG_DEBUG_PARANOID_ASSERTS
+    debug("\t * Getting size at the start...");
     int after_size = get_freelist_size(slab);
+    debug(" %d slots\n", start_size);
     assert((start_size == after_size) && "Freelist size changed :(");
 #endif // SLAB_CONFIG_DEBUG_PARANOID_ASSERTS
 
@@ -260,6 +262,13 @@ void mem_slab_dealloc(struct mem_slab* slab, void* ptr) {
     debug("SLAB: deallocating slot %i on cache %p\n", slot_index, slab);
     debug("\t * Freelist start is %d\n", slab->freelist_start_index);
     debug("\t * Freelist end is %d\n", slab->freelist_end_index);
+
+#ifdef SLAB_CONFIG_DEBUG_PARANOID_ASSERTS
+    debug("\t * Getting size at the start...");
+    int start_size = get_freelist_size(slab);
+    debug(" %d slots\n", start_size);
+#endif // SLAB_CONFIG_DEBUG_PARANOID_ASSERTS
+
 
     // Check for double free
     assert((freelist_array[slot_index].is_free == SLOT_BUSY) && "Passed pointer has never been allocated or already free");
@@ -295,6 +304,13 @@ void mem_slab_dealloc(struct mem_slab* slab, void* ptr) {
 
     debug("\t * New first in the freelist %i\n", slab->freelist_start_index);
     debug("\t * New last in the freelist %i\n", slab->freelist_end_index);
+
+#ifdef SLAB_CONFIG_DEBUG_PARANOID_ASSERTS
+    debug("\t * Getting size at the start...");
+    int after_size = get_freelist_size(slab);
+    debug(" %d slots\n", start_size);
+    assert((start_size == after_size) && "Freelist size changed :(");
+#endif // SLAB_CONFIG_DEBUG_PARANOID_ASSERTS
 
 #ifdef SLAB_CONFIG_DEBUG_FREELIST
     print_freelist(slab);
