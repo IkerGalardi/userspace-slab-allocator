@@ -7,6 +7,7 @@
 #ifdef DEBUG_ASSERTS
     #include <assert.h>
     #define assert_not_reached() assert((false))
+    #pragma message "Build might be slower, asserts are currently active"
 #else
     #define assert(x)
     #define assert_not_reached()
