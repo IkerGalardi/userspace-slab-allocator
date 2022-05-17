@@ -1,6 +1,11 @@
 #ifndef INTERNAL_ASSERT_H
 #define INTERNAL_ASSERT_H
 
+// Asserts will always be available on debug builds.
+#ifdef SLAB_DEBUG
+    #define DEBUG_ASSERTS
+#endif // SLAB_DEBUG
+
 // Doing this in order to remove unnecessary function calls inside the allocator. Those
 // functions are called in order to check the correct functioning of the allocator, but
 // are not necessary in release builds.
