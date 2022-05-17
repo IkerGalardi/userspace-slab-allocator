@@ -92,6 +92,27 @@ static void move_slab_to_end_of_the_list(struct slab_pool* pool, struct mem_slab
     slab->next = NULL;
 }
 
+static void move_slab_to_start_of_the_list(struct slab_pool* pool, struct mem_slab* slab) {
+    struct mem_slab* list_start = pool->list_start;
+    struct mem_slab* previous = slab->prev;
+    struct mem_slab* next = slab->next;
+
+    // Remove node from the list
+    if(next == NULL) {
+        previous->next = NULL;
+        pool->list_end = slab->prev;
+    } else {
+        previous->next = next;
+        next->prev = previous;
+    }
+
+    // Insert the node at the start of the list
+    slab->next = list_start;
+    slab->prev = NULL;
+    list_start->prev = slab;
+    pool->list_start = slab;
+}
+
 struct slab_pool slab_pool_create(size_t allocation_size) {
     struct mem_slab* first_slab = mem_slab_create(allocation_size, 0);
 
@@ -162,13 +183,6 @@ void* slab_pool_allocate(struct slab_pool* pool) {
     struct mem_slab* slab_with_space = get_slab_with_enough_space(pool);
     assert((slab_with_space != NULL) && "NULL slab returned from get_slab_with_enough_space");
 
-    // Allocate the pointer to be returned
-    void* result = mem_slab_alloc(slab_with_space);
-
-#ifdef POOL_CONFIG_PARANOID_ASSERTS
-    assert((result != NULL) && "Slab full when it should not");
-#endif
-
     // Check if the slab is full, if it is move it to the end of the caches to ensure that
     // caches with enough capacity to allocate will always be at the start.
     bool slab_full = slab_with_space->ref_count == slab_with_space->max_refs;
@@ -178,6 +192,13 @@ void* slab_pool_allocate(struct slab_pool* pool) {
 
         move_slab_to_end_of_the_list(pool, slab_with_space);
     }
+
+    // Allocate the pointer to be returned
+    void* result = mem_slab_alloc(slab_with_space);
+
+#ifdef POOL_CONFIG_PARANOID_ASSERTS
+    assert((result != NULL) && "Slab full when it should not");
+#endif
 
     debug("\t* Returning\n"); 
     return result;
@@ -204,23 +225,8 @@ bool slab_pool_deallocate(struct slab_pool* pool, void* ptr) {
     // If the slab is not already at the start of the pool, move it to the start.
     if(slab != pool->list_start) {
         debug("\t* Freed slab is not first in the list, moving it\n");
-        struct mem_slab* list_start = pool->list_start;
-        struct mem_slab* previous = slab->prev;
-        struct mem_slab* next = slab->next;
 
-        // Remove node from the list
-        if(next == NULL) {
-            previous->next = NULL;
-        } else {
-            previous->next = next;
-            next->prev = previous;
-        }
-
-        // Insert the node at the start of the list
-        slab->next = list_start;
-        slab->prev = NULL;
-        list_start->prev = slab;
-        pool->list_start = slab;
+        move_slab_to_start_of_the_list(pool, slab);
     }
 
     debug("\t* Freeing in the slab\n");
