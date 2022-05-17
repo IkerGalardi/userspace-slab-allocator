@@ -7,7 +7,7 @@
 #include "slab.h"
 #include "slab_pool.h"
 
-#define DEBUG_ASSERTS
+//#define DEBUG_ASSERTS
 #include "internal_assert.h"
 
 //#define SMALLOC_CONFIG_DEBUG

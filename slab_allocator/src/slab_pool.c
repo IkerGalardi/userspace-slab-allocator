@@ -2,6 +2,7 @@
 
 #include <stdio.h>
 
+//#define DEBUG_ASSERTS
 #include "internal_assert.h"
 
 //#define POOL_CONFIG_PARANOID_ASSERTS

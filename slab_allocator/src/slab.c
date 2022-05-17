@@ -9,7 +9,7 @@
 
 #include <sys/mman.h>
 
-#define DEBUG_ASSERTS
+//#define DEBUG_ASSERTS
 #include "internal_assert.h"
 
 #define SLAB_PAGE_SIZE sysconf(_SC_PAGESIZE)
