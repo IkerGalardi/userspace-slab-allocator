@@ -51,14 +51,12 @@ void* smalloc(size_t size) {
     // NOTE: Assumes that the chache configuration sizes are sorted.
     for(int i = 0; i < SMALLOC_CACHE_COUNT; i++) {
         if(size <= pools[i].allocation_size) {
-            printf("SLABBED\n");
             return slab_pool_allocate(pools + i);
         }
     }
 
     // If this point is reached, means that no cache is suitable for allocating the
     // given size.
-    printf("MALLOKED\n");
     return malloc(size);
 }
 
