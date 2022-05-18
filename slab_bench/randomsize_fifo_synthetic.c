@@ -1,5 +1,6 @@
 #include <time.h>
 #include <stdlib.h>
+#include <stdint.h>
 
 #include <smalloc.h>
 #include <math.h>
@@ -23,6 +24,17 @@
 #define ALPHA 2
 #define BETA  20
 
+uint64_t us_spent_allocating = 0;
+uint64_t us_spent_deallocating = 0;
+
+static inline uint64_t timespec_diff_ns(struct timespec *start, struct timespec *end)
+{
+    uint64_t ret;
+    ret =  (uint64_t)(end->tv_sec - start->tv_sec) * CLOCKS_PER_SEC;
+    ret += (uint64_t)(end->tv_nsec - start->tv_nsec);
+    return ret;
+}
+
 int main() {
     smalloc_initialize();
 
@@ -32,13 +44,34 @@ int main() {
     void** allocation = malloc(ALLOCATION_COUNT * sizeof(void*));
 
     for(int it = 0; it < ITERATION_COUNT; it++) {
+        struct timespec start;
+        struct timespec end;
+
+        uint64_t time_allocating_ns = 0;
         for(int i = 0; i < ALLOCATION_COUNT; i++) {
             int allocation_size = roundf(MAX_ALLOCATION_SIZE * gsl_ran_beta(r, ALPHA, BETA));
-            allocation[i] = allocate(allocation_size); 
-        }
 
-        for(int i = 0; i < ALLOCATION_COUNT; i++) {
-            deallocate(allocation[i]); 
+            clock_gettime(CLOCK_MONOTONIC, &start);
+            allocation[i] = allocate(allocation_size); 
+            clock_gettime(CLOCK_MONOTONIC, &end);
+
+            time_allocating_ns += timespec_diff_ns(&start, &end);
         }
+        us_spent_allocating += time_allocating_ns * 0.001;
+
+
+        uint64_t time_deallocating_ns = 0;
+        for(int i = 0; i < ALLOCATION_COUNT; i++) {
+            clock_gettime(CLOCK_MONOTONIC, &start);
+            deallocate(allocation[i]); 
+            clock_gettime(CLOCK_MONOTONIC, &start);
+
+            time_deallocating_ns += timespec_diff_ns(&start, &end);
+        }
+        us_spent_deallocating += time_deallocating_ns * 0.001;
     }
+
+    printf("Time spent allocating\t%u us\n", us_spent_allocating/ITERATION_COUNT);
+    printf("Time spent deallocating\t%u us\n", us_spent_deallocating/ITERATION_COUNT);
+    printf("Time spent in total\t%u us\n", (us_spent_allocating + us_spent_deallocating)/ITERATION_COUNT);
 }
