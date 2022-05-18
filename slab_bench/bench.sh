@@ -14,7 +14,7 @@ echo "  · slabed allocator"
 echo
 echo "RANDOM ALLOC/FREE, SYNTHETIC"
 echo "  · glibc allocator"
-time ./bin/randomalloc_synthetic || exit
+./bin/randomalloc_synthetic || exit
 
 echo "  · slabed allocator"
-time ./bin/randomalloc_synthetic_smalloc || exit
+./bin/randomalloc_synthetic_smalloc || exit
