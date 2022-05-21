@@ -145,7 +145,7 @@ int main() {
         }
     }
 
-    printf("Time spent allocating\t%u us\n", us_allocating);
-    printf("Time spent deallocating\t%u us\n", us_deallocating);
-    printf("Time spent in total\t%u us\n", us_deallocating + us_allocating);
+    printf("Time spent allocating\t%lu us\n", us_allocating);
+    printf("Time spent deallocating\t%lu us\n", us_deallocating);
+    printf("Time spent in total\t%lu us\n", us_deallocating + us_allocating);
 }

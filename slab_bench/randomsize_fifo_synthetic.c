@@ -71,7 +71,7 @@ int main() {
         us_spent_deallocating += time_deallocating_ns * 0.001;
     }
 
-    printf("Time spent allocating\t%u us\n", us_spent_allocating/ITERATION_COUNT);
-    printf("Time spent deallocating\t%u us\n", us_spent_deallocating/ITERATION_COUNT);
-    printf("Time spent in total\t%u us\n", (us_spent_allocating + us_spent_deallocating)/ITERATION_COUNT);
+    printf("Time spent allocating\t%lu us\n", us_spent_allocating/ITERATION_COUNT);
+    printf("Time spent deallocating\t%lu us\n", us_spent_deallocating/ITERATION_COUNT);
+    printf("Time spent in total\t%lu us\n", (us_spent_allocating + us_spent_deallocating)/ITERATION_COUNT);
 }
