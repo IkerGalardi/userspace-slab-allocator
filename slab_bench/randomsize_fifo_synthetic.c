@@ -43,11 +43,12 @@ int main() {
 
     void** allocation = malloc(ALLOCATION_COUNT * sizeof(void*));
 
+    uint64_t time_allocating_ns = 0;
+    uint64_t time_deallocating_ns = 0;
     for(int it = 0; it < ITERATION_COUNT; it++) {
         struct timespec start;
         struct timespec end;
 
-        uint64_t time_allocating_ns = 0;
         for(int i = 0; i < ALLOCATION_COUNT; i++) {
             int allocation_size = roundf(MAX_ALLOCATION_SIZE * gsl_ran_beta(r, ALPHA, BETA));
 
@@ -57,10 +58,8 @@ int main() {
 
             time_allocating_ns += timespec_diff_ns(&start, &end);
         }
-        us_spent_allocating += time_allocating_ns * 0.001;
 
 
-        uint64_t time_deallocating_ns = 0;
         for(int i = 0; i < ALLOCATION_COUNT; i++) {
             clock_gettime(CLOCK_MONOTONIC, &start);
             deallocate(allocation[i]); 
@@ -68,10 +67,9 @@ int main() {
 
             time_deallocating_ns += timespec_diff_ns(&start, &end);
         }
-        us_spent_deallocating += time_deallocating_ns * 0.001;
     }
 
-    printf("Time spent allocating\t%lu us\n", us_spent_allocating/ITERATION_COUNT);
-    printf("Time spent deallocating\t%lu us\n", us_spent_deallocating/ITERATION_COUNT);
-    printf("Time spent in total\t%lu us\n", (us_spent_allocating + us_spent_deallocating)/ITERATION_COUNT);
+    printf("Time spent allocating\t%lu us\n", time_allocating_ns/ITERATION_COUNT);
+    printf("Time spent deallocating\t%lu us\n", time_deallocating_ns/ITERATION_COUNT);
+    printf("Time spent in total\t%lu us\n", (time_allocating_ns + time_deallocating_ns)/ITERATION_COUNT);
 }

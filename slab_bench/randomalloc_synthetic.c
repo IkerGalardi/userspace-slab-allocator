@@ -22,7 +22,7 @@
 int BETA_DISTRIBUTION_ALPHA_VALUE = 4;
 int BETA_DISTRIBUTION_BETA_VALUE  = 1;
 
-#define ITERATION_COUNT 100000000
+#define ITERATION_COUNT 10000000
 #define MAX_ALLOCATIONS 100000
 
 static inline uint64_t timespec_diff_ns(struct timespec *start, struct timespec *end)
@@ -134,15 +134,6 @@ int main() {
 
         double full_percentage = (double)pa.pointer_count / ((double)pa.capacity / 5.0);
         election_threshold = gsl_ran_beta_pdf(full_percentage, 4, 1);
-
-        // Update the usecs with the nanoseconds. This way we dont overflow
-        if(it % 1000 == 0) {
-            us_allocating += ns_allocating_tmp * 0.001;
-            us_deallocating += ns_deallocating_tmp * 0.001;
-
-            ns_allocating_tmp = 0;
-            ns_deallocating_tmp = 0;
-        }
     }
 
     printf("Time spent allocating\t%lu us\n", us_allocating);
