@@ -15,8 +15,8 @@
     #define deallocate(x) free(x)
 #endif // USE_SMALLOC
 
-#define ITERATION_COUNT 100000
-#define ALLOCATION_COUNT 100000
+#define ITERATION_COUNT 100
+#define ALLOCATION_COUNT 1000000
 
 #define MIN_ALLOCATION_SIZE 1
 #define MAX_ALLOCATION_SIZE 800
