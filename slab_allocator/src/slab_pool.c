@@ -5,8 +5,8 @@
 //#define DEBUG_ASSERTS
 #include "internal_assert.h"
 
-//#define POOL_CONFIG_PARANOID_ASSERTS
-//#define POOL_CONFIG_DEBUG
+#define POOL_CONFIG_PARANOID_ASSERTS
+#define POOL_CONFIG_DEBUG
 
 
 #ifdef POOL_CONFIG_DEBUG
@@ -115,7 +115,7 @@ static void move_slab_to_start_of_the_list(struct slab_pool* pool, struct mem_sl
 }
 
 struct slab_pool slab_pool_create(size_t allocation_size) {
-    struct mem_slab* first_slab = mem_slab_create(allocation_size, 0);
+    struct mem_slab* first_slab = mem_slab_create_several(allocation_size, 0, 3, NULL);
 
     struct slab_pool result;
     result.list_start = first_slab;
@@ -161,8 +161,7 @@ static struct mem_slab* get_slab_with_enough_space(struct slab_pool* pool) {
 #endif
 
     // Create a new slab and append it to the start of the pool
-    struct mem_slab* new_first = mem_slab_create(pool->allocation_size, 0);
-    new_first->next = first_slab;
+    struct mem_slab* new_first = mem_slab_create_several(pool->allocation_size, 0, 2, first_slab);
     first_slab->prev = new_first;
     pool->list_start = new_first;
     debug("\t\t * Appended new slab %p to the list\n", new_first);
