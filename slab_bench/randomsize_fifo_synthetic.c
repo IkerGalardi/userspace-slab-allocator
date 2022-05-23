@@ -29,10 +29,16 @@ uint64_t us_spent_deallocating = 0;
 
 static inline uint64_t timespec_diff_ns(struct timespec *start, struct timespec *end)
 {
-    uint64_t ret;
-    ret =  (uint64_t)(end->tv_sec - start->tv_sec) * CLOCKS_PER_SEC;
-    ret += (uint64_t)(end->tv_nsec - start->tv_nsec);
-    return ret;
+    struct timespec result;
+    if ((end->tv_nsec - start->tv_nsec) < 0) {
+        result.tv_sec = end->tv_sec - start->tv_sec - 1;
+        result.tv_nsec = end->tv_nsec - start->tv_nsec + 1000000000L;
+    } else {
+        result.tv_sec = end->tv_sec - start->tv_sec;
+        result.tv_nsec = end->tv_nsec - start->tv_nsec;
+    }
+
+    return (result.tv_sec * 1000000000L) + result.tv_nsec;
 }
 
 int main() {
@@ -63,7 +69,7 @@ int main() {
         for(int i = 0; i < ALLOCATION_COUNT; i++) {
             clock_gettime(CLOCK_MONOTONIC, &start);
             deallocate(allocation[i]); 
-            clock_gettime(CLOCK_MONOTONIC, &start);
+            clock_gettime(CLOCK_MONOTONIC, &end);
 
             time_deallocating_ns += timespec_diff_ns(&start, &end);
         }
