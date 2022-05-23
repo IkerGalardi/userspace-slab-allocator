@@ -173,7 +173,7 @@ struct mem_slab* mem_slab_create(int size, int alignment) {
 
 struct mem_slab* mem_slab_create_several(int size, int alignment, int count, struct mem_slab* next) {
     size_t mapping_size = SLAB_PAGE_SIZE * count;
-    char* result_in_bytes = (char*)mmap(NULL, SLAB_PAGE_SIZE, PROT_READ | PROT_WRITE, MAP_ANONYMOUS | MAP_PRIVATE, -1, 0);
+    char* result_in_bytes = (char*)mmap(NULL, mapping_size, PROT_READ | PROT_WRITE, MAP_ANONYMOUS | MAP_PRIVATE, -1, 0);
 
     // Linux returns -1 as address when no memory is mapped. If that happens return NULL and user should take care of that.
     if(result_in_bytes == (void*)-1) {
@@ -188,6 +188,7 @@ struct mem_slab* mem_slab_create_several(int size, int alignment, int count, str
     for(int i = 1; i < count; i++){
         struct mem_slab* current_slab = (struct mem_slab*)result_in_bytes;
         prepare_slab_header(current_slab, size, alignment);
+        current_slab->prev = (struct mem_slab*)(result_in_bytes - SLAB_PAGE_SIZE);
         result_in_bytes += SLAB_PAGE_SIZE;
         current_slab->next = (struct mem_slab*)result_in_bytes;
     }

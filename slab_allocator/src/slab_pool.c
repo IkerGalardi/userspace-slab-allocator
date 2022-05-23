@@ -5,8 +5,8 @@
 //#define DEBUG_ASSERTS
 #include "internal_assert.h"
 
-#define POOL_CONFIG_PARANOID_ASSERTS
-#define POOL_CONFIG_DEBUG
+//#define POOL_CONFIG_PARANOID_ASSERTS
+//#define POOL_CONFIG_DEBUG
 
 
 #ifdef POOL_CONFIG_DEBUG
