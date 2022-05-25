@@ -69,6 +69,22 @@ static inline bool is_ptr_in_page(const void* page, const void* ptr) {
 }
 
 /*
+ * Returns the size of the slab list. Only for debugging purposes.
+ */
+static int get_list_size(struct mem_slab* list_start) {
+    struct mem_slab* current = list_start;
+    int jumps = 0;
+
+    while(current != NULL) {
+        printf("Current = %p, prev = %p, next = %p\n", current, current->prev, current->next);
+        jumps++;
+        current = current->next;
+    }
+
+    return jumps;
+}
+
+/*
  * Prints the freelist state if SLAB_CONFIG_DEBUG_FREELIST is define.
  */
 static void print_freelist(struct mem_slab* slab) {
@@ -173,7 +189,15 @@ struct mem_slab* mem_slab_create(int size, int alignment) {
 
 struct mem_slab* mem_slab_create_several(int size, int alignment, int count, struct mem_slab* next) {
     size_t mapping_size = SLAB_PAGE_SIZE * count;
-    char* result_in_bytes = (char*)mmap(NULL, mapping_size, PROT_READ | PROT_WRITE, MAP_ANONYMOUS | MAP_PRIVATE, -1, 0);
+    void* mapped_region = mmap(NULL, 
+                               mapping_size, 
+                               PROT_READ | PROT_WRITE, 
+                               MAP_ANONYMOUS | MAP_PRIVATE | MAP_POPULATE, 
+                               -1, 
+                               0);
+    uint8_t* result_in_bytes = (uint8_t*)mapped_region;
+
+    printf("Got %p from the kernel\n", mapped_region);
 
     // Linux returns -1 as address when no memory is mapped. If that happens return NULL and user should take care of that.
     if(result_in_bytes == (void*)-1) {
@@ -185,15 +209,24 @@ struct mem_slab* mem_slab_create_several(int size, int alignment, int count, str
     prepare_slab_header(current_slab, size, alignment);
     result_in_bytes += SLAB_PAGE_SIZE;
     current_slab->next = (struct mem_slab*)result_in_bytes;
+    current_slab->prev = NULL;
     for(int i = 1; i < count; i++){
-        struct mem_slab* current_slab = (struct mem_slab*)result_in_bytes;
+        current_slab = (struct mem_slab*)result_in_bytes;
         prepare_slab_header(current_slab, size, alignment);
         current_slab->prev = (struct mem_slab*)(result_in_bytes - SLAB_PAGE_SIZE);
         result_in_bytes += SLAB_PAGE_SIZE;
         current_slab->next = (struct mem_slab*)result_in_bytes;
     }
+    current_slab->next = NULL;
+
+    int list_size = get_list_size((struct mem_slab*)mapped_region);
+    //printf("list_size = %d, should be %d\n", list_size, )
+    assert((list_size == count));
+
     current_slab->next = next;
-    next->prev = current_slab;
+
+    if(next != NULL)
+        next->prev = current_slab;
 
     return (struct mem_slab*)result_in_bytes;
 }
