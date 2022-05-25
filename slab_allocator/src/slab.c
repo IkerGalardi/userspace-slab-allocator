@@ -193,8 +193,9 @@ struct mem_slab* mem_slab_create_several(int size, int alignment, int count, str
         current_slab->next = (struct mem_slab*)result_in_bytes;
     }
     current_slab->next = next;
+    next->prev = current_slab;
 
-    return current_slab;
+    return (struct mem_slab*)result_in_bytes;
 }
 
 void mem_slab_free(struct mem_slab* slab) {
