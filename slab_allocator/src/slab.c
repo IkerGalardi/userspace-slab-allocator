@@ -230,6 +230,7 @@ struct mem_slab* mem_slab_create_several(int size, int alignment, int count, str
 
 void mem_slab_free(struct mem_slab* slab) {
     assert((slab != NULL));
+    assert((slab->slab_magic == SLAB_MAGIC_NUMBER));
     assert((slab->ref_count == 0) && "Can't free the slab if objects are allocated");
 
     munmap((void*)slab, SLAB_PAGE_SIZE);
@@ -240,6 +241,7 @@ void mem_slab_free(struct mem_slab* slab) {
 void* mem_slab_alloc(struct mem_slab* slab) {
     // Basic sanity checks
     assert((slab != NULL) && "Slab should be a valid pointer");
+    assert((slab->slab_magic == SLAB_MAGIC_NUMBER));
 
     debug("SLAB: allocation of size %i on cache %p\n", slab->size, slab);
 
@@ -316,6 +318,7 @@ void* mem_slab_alloc(struct mem_slab* slab) {
 void mem_slab_dealloc(struct mem_slab* slab, void* ptr) {
     // Basic sanity checks before beginning any work
     assert((slab != NULL) && "Slab should be a valid ptr");
+    assert((slab->slab_magic == SLAB_MAGIC_NUMBER) && "Slab should be a valid ptr");
     assert((is_ptr_in_page(slab, ptr)) && "Pointer was not allocated by this cache");
 
     struct slab_bufctl* freelist_array = (struct slab_bufctl*)(slab->freelist_buffer);
