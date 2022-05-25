@@ -76,7 +76,6 @@ static int get_list_size(struct mem_slab* list_start) {
     int jumps = 0;
 
     while(current != NULL) {
-        printf("Current = %p, prev = %p, next = %p\n", current, current->prev, current->next);
         jumps++;
         current = current->next;
     }
@@ -196,8 +195,6 @@ struct mem_slab* mem_slab_create_several(int size, int alignment, int count, str
                                -1, 
                                0);
     uint8_t* result_in_bytes = (uint8_t*)mapped_region;
-
-    printf("Got %p from the kernel\n", mapped_region);
 
     // Linux returns -1 as address when no memory is mapped. If that happens return NULL and user should take care of that.
     if(result_in_bytes == (void*)-1) {
