@@ -52,9 +52,9 @@ struct mem_slab* mem_slab_create(int size, int alignment);
  *
  * @param size: size of the cache allocations
  * @param alignment: alignment requirements for allocations in slab cache
+ * @param next: the slab to add at the end
  *
- * @return: cache structure used for allocations. NULL if can't get memory
- *          from kernel.
+ * @return: first slab
  */
 struct mem_slab* mem_slab_create_several(int size, int alignment, int count, struct mem_slab* next);
 
