@@ -29,6 +29,14 @@ static void* get_page_pointer(void* ptr) {
     return (void*)((uintptr_t)ptr & (~0xFFF));
 }
 
+static struct mem_slab* get_last_from_list(struct mem_slab* slab) {
+    struct mem_slab* current = slab;
+    while(current->next != NULL) {
+        current = current->next;
+    }
+    return current;
+}
+
 /*
  * Finds if a pointer is allocated in a pool of slabs.
  *
@@ -123,7 +131,7 @@ struct slab_pool slab_pool_create(size_t allocation_size) {
 
     struct slab_pool result;
     result.list_start = first_slab;
-    result.list_end = first_slab;
+    result.list_end = get_last_from_list(first_slab);
     result.allocation_size = allocation_size;
 
 #ifdef POOL_CONFIG_DEBUG
