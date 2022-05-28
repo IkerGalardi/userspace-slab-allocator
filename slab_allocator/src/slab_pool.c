@@ -195,6 +195,8 @@ static struct mem_slab* get_slab_with_enough_space(struct slab_pool* pool) {
     pool->list_start = new_first;
 #endif // POOL_CONFIG_GROW_SEVERAL
 
+    pool_stat_grow_count++;
+
 #ifdef POOL_CONFIG_PARANOID_ASSERTS
     int list_size_after_growing = get_list_size(pool->list_start);
     debug("\t\t * Finished getting the list size: %i\n", list_size_before_growing);
