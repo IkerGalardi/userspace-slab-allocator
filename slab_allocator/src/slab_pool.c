@@ -18,6 +18,8 @@
 #define POOL_START_SIZE  10 
 #define POOL_GROW_RATE   5 
 
+int pool_stat_grow_count = 0;
+
 /*
  * Returns the pointer to the start of the page given a pointer.
  *
@@ -127,12 +129,21 @@ static void move_slab_to_start_of_the_list(struct slab_pool* pool, struct mem_sl
 }
 
 struct slab_pool slab_pool_create(size_t allocation_size) {
+    #ifdef POOL_CONFIG_GROW_SEVERAL
     struct mem_slab* first_slab = mem_slab_create_several(allocation_size, 0, POOL_START_SIZE, NULL);
 
     struct slab_pool result;
     result.list_start = first_slab;
     result.list_end = get_last_from_list(first_slab);
     result.allocation_size = allocation_size;
+    #else
+    struct mem_slab* first_slab = mem_slab_create(allocation_size, 0);
+
+    struct slab_pool result;
+    result.list_start = first_slab;
+    result.list_end = first_slab;
+    result.allocation_size = allocation_size;
+    #endif
 
 #ifdef POOL_CONFIG_DEBUG
     debug("POOL: created pool of size %i\n", result.allocation_size);
@@ -172,10 +183,16 @@ static struct mem_slab* get_slab_with_enough_space(struct slab_pool* pool) {
     debug("\t\t * Finished getting the list size: %i\n", list_size_before_growing);
 #endif
 
+#ifdef POOL_CONFIG_GROW_SEVERAL
     // Create a new slab and append it to the start of the pool
     struct mem_slab* new_first = mem_slab_create_several(pool->allocation_size, 0, POOL_GROW_RATE, first_slab);
     pool->list_start = new_first;
     debug("\t\t * Appended new slab %p to the list\n", new_first);
+#else
+    struct mem_slab* new_first = mem_slab_create(pool->allocation_size, 0);
+    new_first->next = first_slab;
+    first_slab->prev = new_first;
+#endif // POOL_CONFIG_GROW_SEVERAL
 
 #ifdef POOL_CONFIG_PARANOID_ASSERTS
     int list_size_after_growing = get_list_size(pool->list_start);
