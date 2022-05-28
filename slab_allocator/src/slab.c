@@ -186,7 +186,7 @@ struct mem_slab* mem_slab_create(int size, int alignment) {
     return result;
 }
 
-struct mem_slab* mem_slab_create_several(int size, int alignment, int count, struct mem_slab* next) {
+struct mem_slab* mem_slab_create_several(int size, int alignment, int count, struct mem_slab* list_next) {
     size_t mapping_size = SLAB_PAGE_SIZE * count;
     void* mapped_region = mmap(NULL, 
                                mapping_size, 
@@ -202,30 +202,30 @@ struct mem_slab* mem_slab_create_several(int size, int alignment, int count, str
         return NULL;
     }
 
-    struct mem_slab* current_slab = (struct mem_slab*)result_in_bytes;
-    prepare_slab_header(current_slab, size, alignment);
-    result_in_bytes += SLAB_PAGE_SIZE;
-    current_slab->next = (struct mem_slab*)result_in_bytes;
-    current_slab->prev = NULL;
-    for(int i = 1; i < count; i++){
-        current_slab = (struct mem_slab*)result_in_bytes;
-        prepare_slab_header(current_slab, size, alignment);
-        current_slab->prev = (struct mem_slab*)(result_in_bytes - SLAB_PAGE_SIZE);
-        result_in_bytes += SLAB_PAGE_SIZE;
-        current_slab->next = (struct mem_slab*)result_in_bytes;
+    // Prepare all the mapped pages
+    struct mem_slab* first = (struct mem_slab*)mapped_region;
+    prepare_slab_header(first, size, alignment);
+    first->prev = NULL;
+    first->next = (struct mem_slab*)(result_in_bytes + SLAB_PAGE_SIZE);
+    for(int i = 1; i < count; i++) {
+        struct mem_slab* previous = (struct mem_slab*)((i-1) * SLAB_PAGE_SIZE + result_in_bytes);
+        struct mem_slab* current =  (struct mem_slab*)((i+0) * SLAB_PAGE_SIZE + result_in_bytes);
+        struct mem_slab* next =     (struct mem_slab*)((i+1) * SLAB_PAGE_SIZE + result_in_bytes);
+
+        // Prepare the header and link the slabs
+        prepare_slab_header(current, size, alignment);
+        current->prev = previous;
+        current->next = next;
     }
-    current_slab->next = NULL;
+    struct mem_slab* last =  (struct mem_slab*)((count-1) * SLAB_PAGE_SIZE + result_in_bytes);
+    last->next = list_next;
 
-    int list_size = get_list_size((struct mem_slab*)mapped_region);
-    //printf("list_size = %d, should be %d\n", list_size, )
-    assert((list_size == count));
+    // If there is a next, link that next to the already created list
+    if(list_next != NULL) {
+        list_next->prev = last;
+    }
 
-    current_slab->next = next;
-
-    if(next != NULL)
-        next->prev = current_slab;
-
-    return (struct mem_slab*)result_in_bytes;
+    return first;
 }
 
 void mem_slab_free(struct mem_slab* slab) {

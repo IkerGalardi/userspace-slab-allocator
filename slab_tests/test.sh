@@ -20,6 +20,9 @@ mkdir -p bin
 echo "[+] Building 'slab' test"
 gcc slab_test.c  -o bin/slab_test $FLAGS || exit 
 
+echo "[+] Building 'slab_create_several' test"
+gcc slab_create_several_test.c  -o bin/slab_create_several_test $FLAGS || exit 
+
 echo "[+] Building 'pool' test"
 gcc pool_test.c  -o bin/pool_test $FLAGS || exit 
 
@@ -37,6 +40,16 @@ then
     exit
 else
     echo -e "$Green PASSED: slab test passed $Color_Off"
+fi
+
+echo "[+] Testing 'slab_create_several'"
+./bin/slab_create_several_test &> logs/smalloc_test.log
+if [ $? -ne 0 ] 
+then
+    echo -e "$Red FAILED: slab_create_several test failed $ColorOff"
+    exit
+else 
+    echo -e "$Green PASSED: slab_create_several test passed $Color_Off"
 fi
 
 echo "[+] Testing 'pool'"
