@@ -192,12 +192,13 @@ static struct mem_slab* get_slab_with_enough_space(struct slab_pool* pool) {
     struct mem_slab* new_first = mem_slab_create(pool->allocation_size, 0);
     new_first->next = first_slab;
     first_slab->prev = new_first;
+    pool->list_start = new_first;
 #endif // POOL_CONFIG_GROW_SEVERAL
 
 #ifdef POOL_CONFIG_PARANOID_ASSERTS
     int list_size_after_growing = get_list_size(pool->list_start);
     debug("\t\t * Finished getting the list size: %i\n", list_size_before_growing);
-    assert((list_size_before_growing == list_size_after_growing - POOL_GROW_RATE));
+    //assert((list_size_before_growing == list_size_after_growing - POOL_GROW_RATE));
 
     assert((first_slab != pool->list_start));
 #endif
