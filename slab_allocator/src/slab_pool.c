@@ -8,6 +8,7 @@
 //#define POOL_CONFIG_PARANOID_ASSERTS
 //#define POOL_CONFIG_DEBUG
 
+//#define POOL_CONFIG_GROW_SEVERAL
 
 #ifdef POOL_CONFIG_DEBUG
     #define debug(...) fprintf(stderr, __VA_ARGS__); fflush(stderr)
@@ -17,6 +18,12 @@
 
 #define POOL_START_SIZE  10 
 #define POOL_GROW_RATE   5 
+
+#ifndef POOL_CONFIG_GROW_SEVERAL
+#undef POOL_GROW_RATE
+#define POOL_GROW_RATE 1
+#endif // POOL_CONFIG_GROW_SEVERAL
+
 
 int pool_stat_grow_count = 0;
 
@@ -112,6 +119,10 @@ static void move_slab_to_start_of_the_list(struct slab_pool* pool, struct mem_sl
     struct mem_slab* previous = slab->prev;
     struct mem_slab* next = slab->next;
 
+    if(pool->list_start == slab) {
+        return;
+    }
+
     // Remove node from the list
     if(next == NULL) {
         previous->next = NULL;
@@ -183,13 +194,26 @@ static struct mem_slab* get_slab_with_enough_space(struct slab_pool* pool) {
     debug("\t\t * Finished getting the list size: %i\n", list_size_before_growing);
 #endif
 
+    // Check the next. This is done because when creating several caches at the same
+    // time we have several free slots.
+    move_slab_to_end_of_the_list(pool, first_slab);
+    if(first_slab->ref_count < first_slab->max_refs) {
+        debug("\t\t * First slab already free, returning %p\n", first_slab);
+        debug("\t\t * Reference count is %i\n", first_slab->ref_count);
+        debug("\t\t * Max allocations are %i\n", first_slab->max_refs);
+        return first_slab;
+    }
+
 #ifdef POOL_CONFIG_GROW_SEVERAL
     // Create a new slab and append it to the start of the pool
     struct mem_slab* new_first = mem_slab_create_several(pool->allocation_size, 0, POOL_GROW_RATE, first_slab);
     pool->list_start = new_first;
     debug("\t\t * Appended new slab %p to the list\n", new_first);
 #else
+    first_slab = pool->list_start;
     struct mem_slab* new_first = mem_slab_create(pool->allocation_size, 0);
+
+    // Append the list at the start
     new_first->next = first_slab;
     first_slab->prev = new_first;
     pool->list_start = new_first;
