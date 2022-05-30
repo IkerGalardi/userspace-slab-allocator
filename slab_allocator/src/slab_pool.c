@@ -1,6 +1,8 @@
 #include "slab_pool.h"
 
 #include <stdio.h>
+#include <unistd.h>
+#include <sys/mman.h>
 
 //#define DEBUG_ASSERTS
 #include "internal_assert.h"
@@ -287,5 +289,6 @@ bool slab_pool_deallocate(struct slab_pool* pool, void* ptr) {
 
     debug("\t* Freeing in the slab\n");
     mem_slab_dealloc(pool->list_start, ptr);
+    madvise(pool->list_start, POOL_PAGE_SIZE, MADV_DONTNEED);
     return true;
 }
