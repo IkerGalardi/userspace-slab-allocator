@@ -26,6 +26,7 @@
 #define POOL_GROW_RATE 1
 #endif // POOL_CONFIG_GROW_SEVERAL
 
+#define POOL_PAGE_SIZE sysconf(_SC_PAGESIZE)
 
 int pool_stat_grow_count = 0;
 
