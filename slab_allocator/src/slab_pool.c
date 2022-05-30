@@ -10,7 +10,7 @@
 //#define POOL_CONFIG_PARANOID_ASSERTS
 //#define POOL_CONFIG_DEBUG
 
-//#define POOL_CONFIG_GROW_SEVERAL
+#define POOL_CONFIG_GROW_SEVERAL
 
 #ifdef POOL_CONFIG_DEBUG
     #define debug(...) fprintf(stderr, __VA_ARGS__); fflush(stderr)
