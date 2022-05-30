@@ -290,6 +290,20 @@ bool slab_pool_deallocate(struct slab_pool* pool, void* ptr) {
 
     debug("\t* Freeing in the slab\n");
     mem_slab_dealloc(pool->list_start, ptr);
-    madvise(pool->list_start, POOL_PAGE_SIZE, MADV_DONTNEED);
+    
+    // If the slab is empty and if it's not the only one, we can delete and free the memory.
+    // Maybe a very aggressive option to directly free, but doing a madvise(.., MADV_DONTNEED)
+    // zero's out the page and can't figure a smart way of recovering.
+    if(pool->list_start->ref_count == 0 && pool->list_start != pool->list_end) {
+        struct mem_slab* to_delete = pool->list_start;
+        struct mem_slab* previous = slab->prev;
+        struct mem_slab* next =     slab->next;
+
+        pool->list_start = next;
+        next->prev = NULL;
+
+        mem_slab_free(to_delete);
+    }
+
     return true;
 }
