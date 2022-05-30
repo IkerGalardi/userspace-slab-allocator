@@ -197,6 +197,7 @@ static struct mem_slab* get_slab_with_enough_space(struct slab_pool* pool) {
     // Check the next. This is done because when creating several caches at the same
     // time we have several free slots.
     move_slab_to_end_of_the_list(pool, first_slab);
+    first_slab = pool->list_start;
     if(first_slab->ref_count < first_slab->max_refs) {
         debug("\t\t * First slab already free, returning %p\n", first_slab);
         debug("\t\t * Reference count is %i\n", first_slab->ref_count);
@@ -210,7 +211,7 @@ static struct mem_slab* get_slab_with_enough_space(struct slab_pool* pool) {
     pool->list_start = new_first;
     debug("\t\t * Appended new slab %p to the list\n", new_first);
 #else
-    first_slab = pool->list_start;
+
     struct mem_slab* new_first = mem_slab_create(pool->allocation_size, 0);
 
     // Append the list at the start
