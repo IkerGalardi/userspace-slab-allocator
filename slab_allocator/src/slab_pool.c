@@ -181,6 +181,11 @@ static struct mem_slab* get_slab_with_enough_space(struct slab_pool* pool) {
 
     assert((first_slab != NULL) && "List broken");
 
+    size_t grow_rate_multiplier = 1;
+    if(pool->allocation_count > pool->deallocation_count && pool->deallocation_count != 0) {
+        grow_rate_multiplier = pool->allocation_count / pool->deallocation_count;
+    }
+
 #ifdef POOL_CONFIG_DEBUG
     int size = get_list_size(pool->list_start);
     debug("\t* Size of the list at the start is %i\n", size);
@@ -213,7 +218,10 @@ static struct mem_slab* get_slab_with_enough_space(struct slab_pool* pool) {
 
 #ifdef POOL_CONFIG_GROW_SEVERAL
     // Create a new slab and append it to the start of the pool
-    struct mem_slab* new_first = mem_slab_create_several(pool->allocation_size, 0, POOL_GROW_RATE, first_slab);
+    struct mem_slab* new_first = mem_slab_create_several(pool->allocation_size, 
+                                                         0, 
+                                                         POOL_GROW_RATE * grow_rate_multiplier, 
+                                                         first_slab);
     pool->list_start = new_first;
     debug("\t\t * Appended new slab %p to the list\n", new_first);
 #else
