@@ -183,7 +183,7 @@ static struct mem_slab* get_slab_with_enough_space(struct slab_pool* pool) {
 
     size_t grow_rate_multiplier = 1;
     if(pool->allocation_count > pool->deallocation_count && pool->deallocation_count != 0) {
-        grow_rate_multiplier = pool->allocation_count / pool->deallocation_count;
+        grow_rate_multiplier = 3;
     }
 
 #ifdef POOL_CONFIG_DEBUG
