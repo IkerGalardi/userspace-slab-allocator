@@ -20,6 +20,7 @@
 
 #define POOL_START_SIZE  10 
 #define POOL_GROW_RATE   5 
+#define POOL_MAX_GROW_RATE   5 
 
 #ifndef POOL_CONFIG_GROW_SEVERAL
 #undef POOL_GROW_RATE
@@ -183,7 +184,8 @@ static struct mem_slab* get_slab_with_enough_space(struct slab_pool* pool) {
 
     size_t grow_rate_multiplier = 1;
     if(pool->allocation_count > pool->deallocation_count && pool->deallocation_count != 0) {
-        grow_rate_multiplier = 3;
+        size_t difference = pool->allocation_count - pool->deallocation_count;
+        grow_rate_multiplier = ((difference < POOL_MAX_GROW_RATE) ? (difference) : POOL_MAX_GROW_RATE);
     }
 
 #ifdef POOL_CONFIG_DEBUG
