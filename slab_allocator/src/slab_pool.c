@@ -159,6 +159,9 @@ struct slab_pool slab_pool_create(size_t allocation_size) {
     result.allocation_size = allocation_size;
     #endif
 
+    result.allocation_count = 0;
+    result.deallocation_count = 0;
+
 #ifdef POOL_CONFIG_DEBUG
     debug("POOL: created pool of size %i\n", result.allocation_size);
     int size = get_list_size(result.list_start);
@@ -242,6 +245,8 @@ void* slab_pool_allocate(struct slab_pool* pool) {
     struct mem_slab* slab_with_space = get_slab_with_enough_space(pool);
     assert((slab_with_space != NULL) && "NULL slab returned from get_slab_with_enough_space");
 
+    pool->allocation_count++;
+
     // Check if the slab is full, if it is move it to the end of the caches to ensure that
     // caches with enough capacity to allocate will always be at the start.
     bool slab_full = slab_with_space->ref_count == slab_with_space->max_refs;
@@ -265,6 +270,8 @@ void* slab_pool_allocate(struct slab_pool* pool) {
 
 bool slab_pool_deallocate(struct slab_pool* pool, void* ptr) {
     debug("POOL: deallocating pointer %p\n", ptr);
+
+    pool->deallocation_count++;
 
     // Fast path. If there is no magic number or the size is not the same, then we simply return that the pointer
     // was not allocater on this pool.
@@ -294,7 +301,9 @@ bool slab_pool_deallocate(struct slab_pool* pool, void* ptr) {
     // If the slab is empty and if it's not the only one, we can delete and free the memory.
     // Maybe a very aggressive option to directly free, but doing a madvise(.., MADV_DONTNEED)
     // zero's out the page and can't figure a smart way of recovering.
-    if(pool->list_start->ref_count == 0 && pool->list_start != pool->list_end) {
+    if((pool->list_start->ref_count == 0) && 
+       (pool->list_start != pool->list_end) &&
+       (pool->allocation_count < pool->deallocation_count)) {
         struct mem_slab* to_delete = pool->list_start;
         struct mem_slab* previous = slab->prev;
         struct mem_slab* next =     slab->next;

@@ -11,6 +11,9 @@ struct slab_pool {
     struct mem_slab* list_end;
     
     size_t allocation_size;
+
+    size_t allocation_count;
+    size_t deallocation_count;
 };
 
 /*
