@@ -2,6 +2,7 @@
 
 #include <assert.h>
 
+// TODO: remove GNU specific stuff. Should be cross os
 #define __USE_GNU
 #include <dlfcn.h>
 
