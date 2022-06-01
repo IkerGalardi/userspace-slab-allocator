@@ -68,9 +68,11 @@ endif
 GENERATED :=
 OBJECTS :=
 
+GENERATED += $(OBJDIR)/malloc_integration.o
 GENERATED += $(OBJDIR)/slab.o
 GENERATED += $(OBJDIR)/slab_pool.o
 GENERATED += $(OBJDIR)/smalloc.o
+OBJECTS += $(OBJDIR)/malloc_integration.o
 OBJECTS += $(OBJDIR)/slab.o
 OBJECTS += $(OBJDIR)/slab_pool.o
 OBJECTS += $(OBJDIR)/smalloc.o
@@ -137,6 +139,9 @@ endif
 # File Rules
 # #############################################
 
+$(OBJDIR)/malloc_integration.o: src/malloc_integration.c
+	@echo $(notdir $<)
+	$(SILENT) $(CC) $(ALL_CFLAGS) $(FORCE_INCLUDE) -o "$@" -MF "$(@:%.o=%.d)" -c "$<"
 $(OBJDIR)/slab.o: src/slab.c
 	@echo $(notdir $<)
 	$(SILENT) $(CC) $(ALL_CFLAGS) $(FORCE_INCLUDE) -o "$@" -MF "$(@:%.o=%.d)" -c "$<"

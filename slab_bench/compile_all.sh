@@ -1,6 +1,6 @@
 #!/bin/sh
 
-FLAGS="-O2 -I../slab_allocator/src -L../slab_allocator -lslaballocator -lgsl -lgslcblas -lm"
+FLAGS="-O2 -I../slab_allocator/src -L../slab_allocator -lslaballocator -lgsl -lgslcblas -lm -ldl"
 
 mkdir -p bin
 

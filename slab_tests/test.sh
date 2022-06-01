@@ -1,6 +1,6 @@
 #!/bin/sh
 
-FLAGS="-O2 -I../slab_allocator/src -L../slab_allocator -lslaballocator -lgsl -lgslcblas"
+FLAGS="-O2 -I../slab_allocator/src -L../slab_allocator -lslaballocator -lgsl -lgslcblas -ldl"
 
 # Reset
 Color_Off='\033[0m'       # Text Reset

@@ -7,7 +7,7 @@
 
 #include "malloc_integration.h"
 
-#define SMALLOC_CONFIG_CAMOUFLAGE
+//#define SMALLOC_CONFIG_CAMOUFLAGE
 
 malloc_function system_malloc;
 free_function system_free;
@@ -32,5 +32,12 @@ void* malloc(size_t size) {
 void free(void* ptr) {
     sfree(ptr);
 }
+#else 
+void* malloc(size_t size) {
+    return system_malloc(size);
+}
 
+void free(void* ptr) {
+    system_free(ptr);
+}
 #endif // SMALLOC_CONFIG_CAMOUFLAGE
