@@ -6,6 +6,7 @@
 
 #include "slab.h"
 #include "slab_pool.h"
+#include "malloc_integration.h"
 
 //#define DEBUG_ASSERTS
 #include "internal_assert.h"
@@ -57,7 +58,7 @@ void* smalloc(size_t size) {
 
     // If this point is reached, means that no cache is suitable for allocating the
     // given size.
-    return malloc(size);
+    return system_malloc(size);
 }
 
 void sfree(void* ptr) {
@@ -66,7 +67,7 @@ void sfree(void* ptr) {
     // Fast path. If the pointer was not allocated in a slab we simply free and return.
     struct mem_slab* slab = get_page_pointer(ptr);
     if(slab->slab_magic != SLAB_MAGIC_NUMBER) {
-        free(ptr);
+        system_free(ptr);
         return;
     }
 
