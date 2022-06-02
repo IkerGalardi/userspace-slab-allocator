@@ -12,11 +12,18 @@
 #include "malloc_integration.h"
 
 //#define SMALLOC_CONFIG_CAMOUFLAGE
+#ifdef SMALLOC_CONFIG_CAMOUFLAGE
+    #pragma message "The malloc function will be replaced"
+#endif // SMALLOC_CONFIG_CAMOUFLAGE
 
 malloc_function system_malloc;
 free_function system_free;
 
-void setup_smalloc() {
+void __attribute__((constructor)) setup_smalloc() {
+#ifdef SMALLOC_CONFIG_CAMOUFLAGE
+    smalloc_initialize();
+#endif // SMALLOC_CONFIG_CAMOUFLAGE
+
     system_malloc = (malloc_function)dlsym(RTLD_NEXT, "malloc");
     system_free = (free_function)dlsym(RTLD_NEXT, "free");
 

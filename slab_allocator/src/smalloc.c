@@ -19,8 +19,6 @@
     #define debug(...)
 #endif
 
-extern void setup_smalloc();
-
 #define SMALLOC_CACHE_COUNT 4
 struct slab_pool pools[SMALLOC_CACHE_COUNT];
 
@@ -36,8 +34,6 @@ static void* get_page_pointer(void* ptr) {
 }
 
 void smalloc_initialize() {
-    setup_smalloc();
-
     // NOTE: editing this array will change the cache configuration of smalloc
     size_t cache_sizes[SMALLOC_CACHE_COUNT] = { 8, 16, 24, 32 };
 
