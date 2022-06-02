@@ -29,7 +29,7 @@ workspace "Userspace Slab"
             symbols "on"
             runtime "Release"
             defines { "SLAB_RELEASE" }
-        filter "configurations:Release"
+        filter "configurations:integrated"
             optimize "on"
             symbols "on"
             runtime "Release"
