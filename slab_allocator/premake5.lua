@@ -1,5 +1,5 @@
 workspace "Userspace Slab"
-    configurations { "Testing", "Debug", "Release" }
+    configurations { "Testing", "Debug", "Release", "Integrated" }
 
     project "slaballocator"
         kind "StaticLib"
@@ -26,6 +26,14 @@ workspace "Userspace Slab"
             defines { "SLAB_DEBUG" }
         filter "configurations:Release"
             optimize "on"
-            symbols "off"
+            symbols "on"
             runtime "Release"
             defines { "SLAB_RELEASE" }
+        filter "configurations:Release"
+            optimize "on"
+            symbols "on"
+            runtime "Release"
+            defines {
+            	"SLAB_RELEASE",
+            	"SMALLOC_CONFIG_CAMOUFLAGE"
+            }

@@ -17,6 +17,9 @@ else ifeq ($(config),debug)
 else ifeq ($(config),release)
   slaballocator_config = release
 
+else ifeq ($(config),integrated)
+  slaballocator_config = integrated
+
 else
   $(error "invalid configuration $(config)")
 endif
@@ -43,6 +46,7 @@ help:
 	@echo "  testing"
 	@echo "  debug"
 	@echo "  release"
+	@echo "  integrated"
 	@echo ""
 	@echo "TARGETS:"
 	@echo "   all (default)"
