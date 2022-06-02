@@ -1,6 +1,6 @@
 #!/bin/sh
 
-FLAGS="-O2 -I../slab_allocator/src -L../slab_allocator -lslaballocator -lgsl -lgslcblas -ldl"
+FLAGS="-O2 -I../slab_allocator/src -L../slab_allocator -lslaballocator -lgsl -lgslcblas -ldl -g"
 
 # Reset
 Color_Off='\033[0m'       # Text Reset
@@ -16,6 +16,10 @@ Cyan='\033[0;36m'         # Cyan
 White='\033[0;37m'        # White
 
 mkdir -p bin
+
+cd ../slab_allocator
+make config=debug > /dev/null
+cd ../slab_tests
 
 echo "[+] Building 'slab' test"
 gcc slab_test.c  -o bin/slab_test $FLAGS || exit 

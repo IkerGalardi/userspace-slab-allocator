@@ -8,8 +8,8 @@
 #include <gsl/gsl_randist.h>
 
 #ifdef USE_SMALLOC
-    #define allocate(x)   smalloc(x)
-    #define deallocate(x) sfree(x)
+    #define allocate(x)   malloc(x)
+    #define deallocate(x) free(x)
 #else
     #define allocate(x)   malloc(x)
     #define deallocate(x) free(x)
@@ -56,7 +56,8 @@ int main() {
         struct timespec end;
 
         for(int i = 0; i < ALLOCATION_COUNT; i++) {
-            int allocation_size = roundf(MAX_ALLOCATION_SIZE * gsl_ran_beta(r, ALPHA, BETA));
+            int allocation_size = roundf(MAX_ALLOCATION_SIZE *
+                                         gsl_ran_beta(r, ALPHA, BETA));
 
             clock_gettime(CLOCK_MONOTONIC, &start);
             allocation[i] = allocate(allocation_size); 
