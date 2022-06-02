@@ -1,6 +1,9 @@
 #include "smalloc.h"
 
 #include <assert.h>
+#include <stdio.h>
+#include <unistd.h>
+#include <string.h>
 
 // TODO: remove GNU specific stuff. Should be cross os
 #define __USE_GNU
@@ -13,11 +16,7 @@
 malloc_function system_malloc;
 free_function system_free;
 
-void __attribute__((constructor)) setup_smalloc() {
-#ifdef SMALLOC_CONFIG_CAMOUFLAGE
-    smalloc_initialize();
-#endif // SMALLOC_CONFIG_CAMOUFLAGE
-
+void setup_smalloc() {
     system_malloc = (malloc_function)dlsym(RTLD_NEXT, "malloc");
     system_free = (free_function)dlsym(RTLD_NEXT, "free");
 
@@ -32,13 +31,5 @@ void* malloc(size_t size) {
 
 void free(void* ptr) {
     sfree(ptr);
-}
-#else 
-void* malloc(size_t size) {
-    return system_malloc(size);
-}
-
-void free(void* ptr) {
-    system_free(ptr);
 }
 #endif // SMALLOC_CONFIG_CAMOUFLAGE

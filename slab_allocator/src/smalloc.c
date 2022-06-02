@@ -19,6 +19,8 @@
     #define debug(...)
 #endif
 
+extern void setup_smalloc();
+
 #define SMALLOC_CACHE_COUNT 4
 struct slab_pool pools[SMALLOC_CACHE_COUNT];
 
@@ -34,6 +36,8 @@ static void* get_page_pointer(void* ptr) {
 }
 
 void smalloc_initialize() {
+    setup_smalloc();
+
     // NOTE: editing this array will change the cache configuration of smalloc
     size_t cache_sizes[SMALLOC_CACHE_COUNT] = { 8, 16, 24, 32 };
 
@@ -49,7 +53,7 @@ void* smalloc(size_t size) {
     debug("SMALLOC: Allocation of size %i\n", size);
 
     // Find a suitable cache and try to allocate on it.
-    // NOTE: Assumes that the chache configuration sizes are sorted.
+    // NOTE: Assumes that the cache configuration sizes are sorted.
     for(int i = 0; i < SMALLOC_CACHE_COUNT; i++) {
         if(size <= pools[i].allocation_size) {
             return slab_pool_allocate(pools + i);
