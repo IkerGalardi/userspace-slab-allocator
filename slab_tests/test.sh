@@ -29,11 +29,17 @@ gcc pool_test.c  -o bin/pool_test $FLAGS || exit
 echo "[+] Building 'smalloc' test"
 gcc smalloc_test.c  -o bin/smalloc_test $FLAGS || exit 
 
+echo "[+] Building 'integration' test"
+cd ../slab_allocator
+make config=integrated
+cd ../slab_tests
+gcc integration_test.c  -o bin/integration_test $FLAGS || exit
+
 mkdir -p logs
 
 echo
 echo "[+] Testing 'slab'"
-./bin/slab_test &> logs/smalloc_test.log
+./bin/slab_test &> logs/slab_test.log
 if [ $? -ne 0 ] 
 then
     echo -e "$Red FAILED: slab test failed $ColorOff"
@@ -43,7 +49,7 @@ else
 fi
 
 echo "[+] Testing 'slab_create_several'"
-./bin/slab_create_several_test &> logs/smalloc_test.log
+./bin/slab_create_several_test &> logs/slab_create_several_test.log
 if [ $? -ne 0 ] 
 then
     echo -e "$Red FAILED: slab_create_several test failed $ColorOff"
@@ -53,7 +59,7 @@ else
 fi
 
 echo "[+] Testing 'pool'"
-./bin/pool_test &> logs/smalloc_test.log
+./bin/pool_test &> logs/pool_test.log
 if [ $? -ne 0 ] 
 then
     echo -e "$Red FAILED: pool test failed $ColorOff"
@@ -70,4 +76,14 @@ then
     exit
 else
     echo -e "$Green PASSED: smalloc test passed $Color_Off"
+fi
+
+echo "[+] Testing malloc integration"
+./bin/integration_test &> logs/integration_test.log
+if [ $? -ne 0 ]
+then
+    echo -e "$Red FAILED: integration test failed $Color_Off"
+    exit
+else
+    echo -e "$Green PASSED: test passed $Color_Off"
 fi
