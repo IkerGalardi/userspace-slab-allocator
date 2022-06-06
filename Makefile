@@ -1,7 +1,7 @@
 CC=gcc
 AR=ar
-CFLAGS+=-march=native -O2 -g
-ADDITIONAL_FLAGS=""
+CFLAGS=-march=native -O2 -g
+ADDITIONAL_FLAGS=
 
 LIBRARY_NAME=libslaballocator
 
@@ -15,11 +15,10 @@ static: $(OBJECT_FILES)
 	$ $(AR) -rcs $(LIBRARY_NAME).a $(OBJECT_FILES)
 
 bin/%.o: src/%.c
-	@echo "[+] Compiling $(notdir $<)"
-	@ $(CC) -o $@ -c $< $(CFLAGS) $(ADDITIONAL_FLAGS)
+	$(CC) -o $@ -c $< $(CFLAGS) $(ADDITIONAL_FLAGS)
 
-test:
-	echo "TESTING"
+test: static
+	sh tests/test.sh
 
 benchmark:
 	echo "BENCHMARKING"
@@ -35,6 +34,6 @@ help:
 	@echo " · benchmark: build an optimized library and execute the benchmarks"
 	@echo ""
 	@echo "ADDITIONAL_FLAGS:"
-	@echo " · SLAB_DEBUG: enable debugging prints"
-	@echo " · SLAB_CONFIG_PARANOID_ASSERTS: enable paranoid asserts, testing stuff that should work but maybe doesn't"
-	@echo " · POOL_CONFIG_PARANOID_ASSERTS: enable paranoid asserts, testing stuff that should work but maybe doesn't"
+	@echo " · -DSLAB_DEBUG: enable debugging prints"
+	@echo " · -DSLAB_CONFIG_PARANOID_ASSERTS: enable paranoid asserts, testing stuff that should work but maybe doesn't"
+	@echo " · -DPOOL_CONFIG_PARANOID_ASSERTS: enable paranoid asserts, testing stuff that should work but maybe doesn't"
