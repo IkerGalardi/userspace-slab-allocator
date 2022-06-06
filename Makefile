@@ -21,7 +21,7 @@ test: static
 	sh tests/test.sh
 
 benchmark:
-	echo "BENCHMARKING"
+	sh bench/bench.sh
 
 clean:
 	@ rm bin/*.o
