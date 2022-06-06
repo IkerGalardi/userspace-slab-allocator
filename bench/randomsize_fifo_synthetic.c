@@ -1,6 +1,7 @@
 #include <time.h>
 #include <stdlib.h>
 #include <stdint.h>
+#include <getopt.h>
 
 #include <smalloc.h>
 #include <math.h>
@@ -41,8 +42,37 @@ static inline uint64_t timespec_diff_ns(struct timespec *start, struct timespec 
     return (result.tv_sec * 1000000000L) + result.tv_nsec;
 }
 
-int main() {
+struct benchmark_parameters {
+    uint32_t alpha;
+    uint32_t beta;
+};
+
+struct benchmark_parameters get_params(int argc, char** argv) {
+    struct benchmark_parameters result = {
+        .alpha = 2,
+        .beta = 20
+    };
+
+    int option = 0;
+    while((option = getopt(argc, argv, "a:b:")) != -1) {
+        switch(option) {
+        case 'a':
+            result.alpha = atoi(optarg);
+            break;
+
+        case 'b':
+            result.beta = atoi(optarg);
+            break;
+        }
+    }
+
+    return result;
+}
+
+int main(int argc, char** argv) {
     smalloc_initialize();
+
+    struct benchmark_parameters params = get_params(argc, argv);
 
     gsl_rng* r = gsl_rng_alloc(gsl_rng_default);
     gsl_rng_set(r, 0);
@@ -57,7 +87,7 @@ int main() {
 
         for(int i = 0; i < ALLOCATION_COUNT; i++) {
             int allocation_size = roundf(MAX_ALLOCATION_SIZE *
-                                         gsl_ran_beta(r, ALPHA, BETA));
+                                         gsl_ran_beta(r, params.alpha, params.beta));
 
             clock_gettime(CLOCK_MONOTONIC, &start);
             allocation[i] = allocate(allocation_size); 
