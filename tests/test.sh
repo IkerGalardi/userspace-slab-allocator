@@ -69,13 +69,3 @@ then
 else
     echo -e "$Green PASSED: smalloc test passed $Color_Off"
 fi
-
-echo "[+] Testing malloc integration"
-./bin/integration_test &> tests/logs/integration_test.log
-if [ $? -ne 0 ]
-then
-    echo -e "$Red FAILED: integration test failed $Color_Off"
-    exit
-else
-    echo -e "$Green PASSED: test passed $Color_Off"
-fi
