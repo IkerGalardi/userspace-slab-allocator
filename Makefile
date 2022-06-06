@@ -35,7 +35,6 @@ help:
 	@echo " · benchmark: build an optimized library and execute the benchmarks"
 	@echo ""
 	@echo "ADDITIONAL_FLAGS:"
-	@echo " · SLAB_RELEASE: disable debugging prints"
 	@echo " · SLAB_DEBUG: enable debugging prints"
 	@echo " · SLAB_CONFIG_PARANOID_ASSERTS: enable paranoid asserts, testing stuff that should work but maybe doesn't"
 	@echo " · POOL_CONFIG_PARANOID_ASSERTS: enable paranoid asserts, testing stuff that should work but maybe doesn't"
