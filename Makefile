@@ -1,6 +1,6 @@
 CC=gcc
 AR=ar
-CFLAGS=-march=native -O2 -g
+CFLAGS=-march=native -O2 -g -Wall -Werror -Wpedantic -Wextra
 ADDITIONAL_FLAGS=
 
 LIBRARY_NAME=libslaballocator
