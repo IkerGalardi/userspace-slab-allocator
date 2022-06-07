@@ -51,7 +51,8 @@ struct slab_bufctl {
  * Returns the index of the buffer in the slab->allocable_buffer.
  */
 static inline uint16_t get_buffer_index_from_ptr(struct mem_slab* slab, void* ptr) {
-    // If the pointer is calculated with the next formula, the index should be calculated like the return statement.
+    // If the pointer is calculated with the next formula, the index should be
+    // calculated like the return statement.
     //      ptr = allocable_buffer + slab->size * index;
     //                        |
     //                        v
@@ -131,14 +132,16 @@ static void prepare_slab_header(struct mem_slab* result, int size, int alignment
 
     debug("\t * Freelist buffer at %p\n", result->freelist_buffer);
 
-    // Taking into account the next relation, we can calculate the number of buffers that can be saved on a page:
+    // Taking into account the next relation, we can calculate the number of buffers
+    // that can be saved on a page:
     //          sizeof(mem_slab) + num_buffers * (buff_size * sizeof(bufctl)) = SLAB_PAGE_SIZE
     int num_buffers = (SLAB_PAGE_SIZE - sizeof(struct mem_slab))/(size * sizeof(struct slab_bufctl));
     debug("\t * %i allocations available on this cache\n", num_buffers);
 
 
     // Link all the free list
-    // TODO: maybe can avoid linking all the freelist at the start and do it with each allocation. Investigate that.
+    // TODO: maybe can avoid linking all the freelist at the start and do it
+    //       with each allocation. Investigate that.
     struct slab_bufctl* freelist_buffer = (struct slab_bufctl*)result->freelist_buffer;
     for(int i = 0; i < num_buffers; i++) {
         freelist_buffer[i].prev_index = i - 1;
@@ -171,9 +174,15 @@ struct mem_slab* mem_slab_create(int size, int alignment) {
     assert((alignment >= 0) && "Alignment must be bigger than 0");
 
     debug("SLAB: creating new cache...\n");
-    struct mem_slab* result = (struct mem_slab*)mmap(NULL, SLAB_PAGE_SIZE, PROT_READ | PROT_WRITE, MAP_ANONYMOUS | MAP_PRIVATE, -1, 0);
+    struct mem_slab* result = (struct mem_slab*)mmap(NULL,
+                                                     SLAB_PAGE_SIZE,
+                                                     PROT_READ | PROT_WRITE,
+                                                     MAP_ANONYMOUS | MAP_PRIVATE,
+                                                     -1,
+                                                     0);
     
-    // Linux returns -1 as address when no memory is mapped. If that happens return NULL and user should take care of that.
+    // Linux returns -1 as address when no memory is mapped. If that happens
+    // return NULL and user should take care of that.
     if(result == (void*)-1) {
         debug("\t Could not get memory from the kernel\n");
         return NULL;
@@ -196,7 +205,8 @@ struct mem_slab* mem_slab_create_several(int size, int alignment, int count, str
                                0);
     uint8_t* result_in_bytes = (uint8_t*)mapped_region;
 
-    // Linux returns -1 as address when no memory is mapped. If that happens return NULL and user should take care of that.
+    // Linux returns -1 as address when no memory is mapped. If that happens
+    // return NULL and user should take care of that.
     if(result_in_bytes == (void*)-1) {
         debug("\t Could not get memory from the kernel\n");
         return NULL;
@@ -259,7 +269,8 @@ void* mem_slab_alloc(struct mem_slab* slab) {
     int free_index = slab->freelist_start_index;
     debug("\t * Freelist start index is %i\n", free_index);
 
-    // If the first node of the freelist is not free then all the buffers have been allocated.
+    // If the first node of the freelist is not free then all the buffers have
+    // been allocated.
     if(freelist_array[free_index].is_free != SLOT_FREE) {
         debug("\t * Can't allocate on this cache\n");
         printf("SLAB WITH NOT ENOUGH SPACE"); fflush(stdout);

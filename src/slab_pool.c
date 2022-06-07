@@ -56,7 +56,7 @@ static struct mem_slab* get_last_from_list(struct mem_slab* slab) {
  * @param pool: pointer to the first element of slab pool
  * @param ptr: pointer to find in pool
  *
- * @return: the slab where 'ptr' is allocated, NULL if 'ptr' was not allocated in the pool->
+ * @return: the slab where 'ptr' is allocated, NULL if 'ptr' was not allocated in the pool.
  */
 static struct mem_slab* is_ptr_allocated_in_pool(struct mem_slab* list_start, void* ptr) {
     struct mem_slab* current_slab = list_start;
@@ -173,7 +173,7 @@ struct slab_pool slab_pool_create(size_t allocation_size) {
 }
 
 /*
- * Returns a non-full slab from a pool-> If there is no slab cache available it will allocate a new 
+ * Returns a non-full slab from a pool. If there is no slab cache available it will allocate a new
  * one and return it. If a NULL slab is returned the system is probably OOM.
  */
 static struct mem_slab* get_slab_with_enough_space(struct slab_pool* pool) {
@@ -308,9 +308,8 @@ bool slab_pool_deallocate(struct slab_pool* pool, void* ptr) {
     debug("\t* Freeing in the slab\n");
     mem_slab_dealloc(pool->list_start, ptr);
     
-    // If the slab is empty and if it's not the only one, we can delete and free the memory.
-    // Maybe a very aggressive option to directly free, but doing a madvise(.., MADV_DONTNEED)
-    // zero's out the page and can't figure a smart way of recovering.
+    // TODO: investigate if madvise(MADVISE_DONTUSE) is better in terms of performance
+    //       and how to implement something like that.
     if((pool->list_start->ref_count == 0) && 
        (pool->list_start != pool->list_end) &&
        (pool->allocation_count < pool->deallocation_count)) {
