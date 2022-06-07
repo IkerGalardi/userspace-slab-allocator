@@ -9,8 +9,8 @@
 
 #include <sys/mman.h>
 
-//#define DEBUG_ASSERTS
 #include "internal_assert.h"
+#include "utils.h"
 
 #define SLAB_PAGE_SIZE sysconf(_SC_PAGESIZE)
 
@@ -64,28 +64,11 @@ static inline uint16_t get_buffer_index_from_ptr(struct mem_slab* slab, void* pt
 /* 
  * Returns true if the pointer specified is in the page specified. False otherwise.
  */
-static inline bool is_ptr_in_page(const void* page, const void* ptr) {
-    const void* page_end = (const void*)((const uint8_t*)page + SLAB_PAGE_SIZE);
-    return (ptr > page) && (page_end > ptr);
-}
+
 
 /*
- * Returns the size of the slab list. Only for debugging purposes.
- */
-static int get_list_size(struct mem_slab* list_start) {
-    struct mem_slab* current = list_start;
-    int jumps = 0;
-
-    while(current != NULL) {
-        jumps++;
-        current = current->next;
-    }
-
-    return jumps;
-}
-
-/*
- * Prints the freelist state if SLAB_CONFIG_DEBUG_FREELIST is define.
+ * Prints the freelist to stdout. Should only be used when debugging is enabled
+ * as traversing the list slows down things.
  */
 static void print_freelist(struct mem_slab* slab) {
     debug("\t * Freelist state:\n");
@@ -108,6 +91,10 @@ static void print_freelist(struct mem_slab* slab) {
             current_index, current_node.prev_index, current_node.next_index, current_node.is_free);
 }
 
+/*
+ * Returns the size of the slab list. Should only be used when debugging is enabled
+ * as traversing the slows down things.
+ */
 static size_t get_freelist_size(struct mem_slab* slab) {
     int count = 0;
 
@@ -121,6 +108,9 @@ static size_t get_freelist_size(struct mem_slab* slab) {
     return count;
 }
 
+/*
+ * Prepares the page to be used as a slab by filling the header structure.
+ */
 static void prepare_slab_header(struct mem_slab* result, int size, int alignment) {
     result->slab_magic = SLAB_MAGIC_NUMBER;
     result->ref_count = 0;
@@ -325,7 +315,6 @@ void* mem_slab_alloc(struct mem_slab* slab) {
 }
 
 // TODO: fill with non allocated pattern 
-// TODO: rewrite this pls.
 void mem_slab_dealloc(struct mem_slab* slab, void* ptr) {
     // Basic sanity checks before beginning any work
     assert((slab != NULL) && "Slab should be a valid ptr");

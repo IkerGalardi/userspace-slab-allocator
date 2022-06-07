@@ -33,8 +33,6 @@ struct mem_slab {
     struct mem_slab* prev;
 };
 
-// TODO: check if constructors and destructors are needed for userspace
-
 /*
  * Creates a slab cache structure and prepares the page.
  *

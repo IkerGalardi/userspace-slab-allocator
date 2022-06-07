@@ -4,13 +4,8 @@
 #include <unistd.h>
 #include <sys/mman.h>
 
-//#define DEBUG_ASSERTS
 #include "internal_assert.h"
-
-//#define POOL_CONFIG_PARANOID_ASSERTS
-//#define POOL_CONFIG_DEBUG
-
-#define POOL_CONFIG_GROW_SEVERAL
+#include "utils.h"
 
 #ifdef POOL_CONFIG_DEBUG
     #define debug(...) fprintf(stderr, __VA_ARGS__); fflush(stderr)
@@ -22,25 +17,11 @@
 #define POOL_GROW_RATE   5 
 #define POOL_MAX_GROW_RATE   5 
 
-#ifndef POOL_CONFIG_GROW_SEVERAL
-#undef POOL_GROW_RATE
-#define POOL_GROW_RATE 1
-#endif // POOL_CONFIG_GROW_SEVERAL
 
 #define POOL_PAGE_SIZE sysconf(_SC_PAGESIZE)
 
 int pool_stat_grow_count = 0;
 
-/*
- * Returns the pointer to the start of the page given a pointer.
- *
- * @param ptr: pointer to find the start of the page
- * @return: pointer to the start of the page of 'ptr'
- */
-static void* get_page_pointer(void* ptr) {
-    // NOTE: assumes 4k pages. maybe some way to detect 16k pages?
-    return (void*)((uintptr_t)ptr & (~0xFFF));
-}
 
 static struct mem_slab* get_last_from_list(struct mem_slab* slab) {
     struct mem_slab* current = slab;
@@ -144,21 +125,12 @@ static void move_slab_to_start_of_the_list(struct slab_pool* pool, struct mem_sl
 }
 
 struct slab_pool slab_pool_create(size_t allocation_size) {
-    #ifdef POOL_CONFIG_GROW_SEVERAL
     struct mem_slab* first_slab = mem_slab_create_several(allocation_size, 0, POOL_START_SIZE, NULL);
 
     struct slab_pool result;
     result.list_start = first_slab;
     result.list_end = get_last_from_list(first_slab);
     result.allocation_size = allocation_size;
-    #else
-    struct mem_slab* first_slab = mem_slab_create(allocation_size, 0);
-
-    struct slab_pool result;
-    result.list_start = first_slab;
-    result.list_end = first_slab;
-    result.allocation_size = allocation_size;
-    #endif
 
     result.allocation_count = 0;
     result.deallocation_count = 0;
@@ -218,7 +190,6 @@ static struct mem_slab* get_slab_with_enough_space(struct slab_pool* pool) {
         return first_slab;
     }
 
-#ifdef POOL_CONFIG_GROW_SEVERAL
     // Create a new slab and append it to the start of the pool
     struct mem_slab* new_first = mem_slab_create_several(pool->allocation_size, 
                                                          0, 
@@ -226,15 +197,6 @@ static struct mem_slab* get_slab_with_enough_space(struct slab_pool* pool) {
                                                          first_slab);
     pool->list_start = new_first;
     debug("\t\t * Appended new slab %p to the list\n", new_first);
-#else
-
-    struct mem_slab* new_first = mem_slab_create(pool->allocation_size, 0);
-
-    // Append the list at the start
-    new_first->next = first_slab;
-    first_slab->prev = new_first;
-    pool->list_start = new_first;
-#endif // POOL_CONFIG_GROW_SEVERAL
 
     pool_stat_grow_count++;
 
