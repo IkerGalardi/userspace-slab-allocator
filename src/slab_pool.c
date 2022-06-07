@@ -17,7 +17,6 @@
 #define POOL_GROW_RATE   5 
 #define POOL_MAX_GROW_RATE   5 
 
-
 #define POOL_PAGE_SIZE sysconf(_SC_PAGESIZE)
 
 int pool_stat_grow_count = 0;

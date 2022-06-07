@@ -9,8 +9,6 @@
 #include "utils.h"
 #include "internal_assert.h"
 
-//#define SMALLOC_CONFIG_DEBUG
-
 #ifdef SMALLOC_CONFIG_DEBUG
     #define debug(...) fprintf(stderr, __VA_ARGS__)
 #else

@@ -2,6 +2,9 @@
 #define SLAB_UTILS_H
 
 #include <stdbool.h>
+#include <unistd.h>
+
+#define SLAB_PAGE_SIZE sysconf(_SC_PAGESIZE)
 
 /*
  * Returns true if the pointer is allocated on the page.

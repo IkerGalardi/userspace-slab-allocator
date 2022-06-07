@@ -14,10 +14,6 @@
 
 #define SLAB_PAGE_SIZE sysconf(_SC_PAGESIZE)
 
-//#define SLAB_CONFIG_DEBUG
-//#define SLAB_CONFIG_DEBUG_FREELIST
-//#define SLAB_CONFIG_DEBUG_PARANOID_ASSERTS
-
 #define NON_EXISTANT (uint16_t)(-1)
 
 // State in which a slot inside a slab can be.
