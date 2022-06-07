@@ -31,45 +31,6 @@ static struct mem_slab* get_last_from_list(struct mem_slab* slab) {
 }
 
 /*
- * Finds if a pointer is allocated in a pool of slabs.
- *
- * @param pool: pointer to the first element of slab pool
- * @param ptr: pointer to find in pool
- *
- * @return: the slab where 'ptr' is allocated, NULL if 'ptr' was not allocated in the pool.
- */
-static struct mem_slab* is_ptr_allocated_in_pool(struct mem_slab* list_start, void* ptr) {
-    struct mem_slab* current_slab = list_start;
-    while(current_slab != NULL) {
-        // If the pointer is in the same page as the slab, then the pointer
-        // was allocated on that slab
-        if(current_slab == get_page_pointer(ptr)) {
-            return current_slab;
-        }
-
-        current_slab = current_slab->next;
-    }
-
-    return NULL;
-}
-
-/*
- * Returns the size of the slab list. Only for debugging purposes.
- */
-static int get_list_size(struct mem_slab* list_start) {
-    struct mem_slab* current = list_start;
-    int jumps = 0;
-
-    while(current != NULL) {
-        fflush(stdout);
-        jumps++;
-        current = current->next;
-    }
-
-    return jumps;
-}
-
-/*
  * Moves a slab to the end of the pool, updating the list_start and list_end if necessary.
  */
 static void move_slab_to_end_of_the_list(struct slab_pool* pool, struct mem_slab* slab) {
@@ -275,7 +236,6 @@ bool slab_pool_deallocate(struct slab_pool* pool, void* ptr) {
        (pool->list_start != pool->list_end) &&
        (pool->allocation_count < pool->deallocation_count)) {
         struct mem_slab* to_delete = pool->list_start;
-        struct mem_slab* previous = slab->prev;
         struct mem_slab* next =     slab->next;
 
         pool->list_start = next;

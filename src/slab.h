@@ -2,6 +2,7 @@
 #define _SLAB_H
 
 #include <stdint.h>
+#include <stddef.h>
 
 #define SLAB_MAGIC_NUMBER 0x51ABA110CA704FFF
 
@@ -11,7 +12,7 @@ struct mem_slab {
     uint64_t slab_magic;
 
     // Size of the allocations in the cache.
-    int size;
+    size_t size;
 
     // Alignment requirements in the cache (IGNORED FOR NOW)
     int alignment;
