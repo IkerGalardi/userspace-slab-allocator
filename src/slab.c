@@ -54,7 +54,7 @@ static inline uint16_t get_buffer_index_from_ptr(struct mem_slab* slab, void* pt
     //                        v
     //      index = (ptr - allocable_buffer) / (slab->size)
 
-    return (ptr - slab->allocable_buffer) / (slab->size);
+    return ((uintptr_t)ptr - (uintptr_t)slab->allocable_buffer) / (slab->size);
 }
 
 /* 
@@ -66,7 +66,7 @@ static inline uint16_t get_buffer_index_from_ptr(struct mem_slab* slab, void* pt
  * Prints the freelist to stdout. Should only be used when debugging is enabled
  * as traversing the list slows down things.
  */
-static void print_freelist(struct mem_slab* slab) {
+MAYBE_UNUSED static void print_freelist(struct mem_slab* slab) {
     debug("\t * Freelist state:\n");
 
     struct slab_bufctl* bufctl_array = (struct slab_bufctl*)(slab->freelist_buffer);
@@ -82,7 +82,6 @@ static void print_freelist(struct mem_slab* slab) {
         current_index = current_node.next_index;
     }
 
-    struct slab_bufctl current_node = bufctl_array[current_index];
     debug("\t\t * Node %i, previous = %i, next = %i, free = %i\n", 
             current_index, current_node.prev_index, current_node.next_index, current_node.is_free);
 }
@@ -91,7 +90,7 @@ static void print_freelist(struct mem_slab* slab) {
  * Returns the size of the slab list. Should only be used when debugging is enabled
  * as traversing the slows down things.
  */
-static size_t get_freelist_size(struct mem_slab* slab) {
+MAYBE_UNUSED static size_t get_freelist_size(struct mem_slab* slab) {
     int count = 0;
 
     int current_index = slab->freelist_start_index;
@@ -145,7 +144,7 @@ static void prepare_slab_header(struct mem_slab* result, int size, int alignment
 
     // TODO: take into account alignment pls
     // TODO: non allocated pattern or something should be added
-    result->allocable_buffer = result->freelist_buffer + num_buffers;
+    result->allocable_buffer = (void*)((uintptr_t)result->freelist_buffer + num_buffers);
 
     debug("\t * Slots start at %p\n", result->allocable_buffer);
     debug("\t * Page ends at %p\n", ((uint8_t*)(result) + SLAB_PAGE_SIZE));
@@ -304,7 +303,7 @@ void* mem_slab_alloc(struct mem_slab* slab) {
     assert((start_size == after_size) && "Freelist size changed :(");
 #endif // SLAB_CONFIG_DEBUG_PARANOID_ASSERTS
 
-    void* to_return = slab->allocable_buffer + slab->size * free_index;
+    void* to_return = (void*)((uintptr_t)slab->allocable_buffer + slab->size * free_index);
     assert((is_ptr_in_page(slab, to_return)) && "Allocation pointer not inside the page cache");
 
     return to_return;

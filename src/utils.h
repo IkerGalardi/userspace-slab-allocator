@@ -6,6 +6,8 @@
 
 #define SLAB_PAGE_SIZE sysconf(_SC_PAGESIZE)
 
+#define MAYBE_UNUSED __attribute__((unused))
+
 /*
  * Returns true if the pointer is allocated on the page.
  *
