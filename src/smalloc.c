@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdbool.h>
+#include <string.h>
 
 #include "slab.h"
 #include "slab_pool.h"
@@ -44,6 +45,30 @@ void* smalloc(size_t size) {
     // If this point is reached, means that no cache is suitable for allocating the
     // given size.
     return malloc(size);
+}
+
+void* srealloc(void* ptr, size_t size) {
+    struct mem_slab* slab = get_page_pointer(ptr);
+    size_t allocation_size = slab->size;
+
+    // If the pointer was not allocated by us, then simply realloc using system's
+    // allocator.
+    if(slab->slab_magic != SLAB_MAGIC_NUMBER) {
+        return realloc(ptr, size);
+    }
+
+    // Our pointers are already small, so there is no need to do reallocations
+    // and we can simply return the provided pointer.
+    if(size < allocation_size) {
+        return ptr;
+    }
+
+    // As a last resort allocate a new buffer and copy the pointer data to the
+    // new buffer.
+    void* new_pointer = smalloc(size);
+    memcpy(new_pointer, ptr, allocation_size);
+    sfree(ptr);
+    return new_pointer;
 }
 
 void sfree(void* ptr) {

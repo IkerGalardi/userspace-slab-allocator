@@ -15,7 +15,12 @@ void smalloc_initialize();
  */
 void* smalloc(size_t size);
 
-/* 
+/*
+ * Resizes a block of memory that was previously allocated.
+ */
+void* srealloc(void* ptr, size_t size);
+
+/*
  * Free's a previously allocated pointer.
  *
  * @param ptr: pointer to free 

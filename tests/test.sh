@@ -27,6 +27,9 @@ gcc tests/pool_test.c  -o bin/pool_test $FLAGS || exit
 echo "[+] Building 'smalloc' test"
 gcc tests/smalloc_test.c  -o bin/smalloc_test $FLAGS || exit 
 
+echo "[+] Building 'srealloc' test"
+gcc tests/srealloc_test.c  -o bin/srealloc_test $FLAGS || exit
+
 mkdir -p tests/logs
 
 echo
@@ -68,4 +71,14 @@ then
     exit
 else
     echo -e "$Green PASSED: smalloc test passed $Color_Off"
+fi
+
+echo "[+] Testing 'srealloc'"
+./bin/srealloc_test &> tests/logs/srealloc_test.log
+if [ $? -ne 0 ]
+then
+    echo -e "$Red FAILED: srealloc test failed $Color_Off"
+    exit
+else
+    echo -e "$Green PASSED: srealloc test passed $Color_Off"
 fi
