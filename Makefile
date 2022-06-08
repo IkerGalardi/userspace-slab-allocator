@@ -21,7 +21,11 @@ bin/%.o: src/%.c
 test: static
 	sh tests/test.sh
 
-benchmark:
+install: static
+	cp $(LIBRARY_NAME).* /usr/lib64
+	cp src/*.h /usr/include
+
+benchmark: static
 	sh bench/bench.sh
 
 clean:

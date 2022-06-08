@@ -19,7 +19,7 @@
 #define SMALLOC_CACHE_COUNT 4
 struct slab_pool pools[SMALLOC_CACHE_COUNT];
 
-void smalloc_initialize() {
+__attribute__((constructor)) void smalloc_initialize() {
     // NOTE: editing this array will change the cache configuration of smalloc
     size_t cache_sizes[SMALLOC_CACHE_COUNT] = { 8, 16, 24, 32 };
 
@@ -48,14 +48,20 @@ void* smalloc(size_t size) {
 }
 
 void* srealloc(void* ptr, size_t size) {
+    // NOTE: this should not be necessary, but apparently dash tryies to srealloc(NULL)
+    if(ptr == NULL) {
+        return smalloc(size);
+    }
+
     struct mem_slab* slab = get_page_pointer(ptr);
-    size_t allocation_size = slab->size;
 
     // If the pointer was not allocated by us, then simply realloc using system's
     // allocator.
     if(slab->slab_magic != SLAB_MAGIC_NUMBER) {
         return realloc(ptr, size);
     }
+
+    size_t allocation_size = slab->size;
 
     // Our pointers are already small, so there is no need to do reallocations
     // and we can simply return the provided pointer.
