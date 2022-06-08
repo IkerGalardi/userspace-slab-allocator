@@ -4,4 +4,4 @@
 
 ## License
 
-
+See `COPYING` file for more details.
