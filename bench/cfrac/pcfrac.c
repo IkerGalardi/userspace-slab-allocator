@@ -9,6 +9,8 @@
 #include <stdio.h>
 #include <math.h>
 
+#include "../integrate.h"
+
 #ifdef __STDC__
 #include <stdlib.h>
 #endif
@@ -76,7 +78,7 @@ BitVector newBitVector(value, size)
 #ifdef BWGC 		 
    res = (BitVector) gc_malloc(msize);
 #else		 
-   res = (BitVector) malloc(msize);
+   res = (BitVector) allocate(msize);
 #endif
    if (res == (BitVector) 0) return res;
 
@@ -170,7 +172,7 @@ SolnPtr newSoln(n, pm, m, next, x, t, e)
 #ifdef BWGC 		 
    SolnPtr bp = (SolnPtr) gc_malloc(sizeof (Soln));
 #else		 
-   SolnPtr bp = (SolnPtr) malloc(sizeof (Soln));
+   SolnPtr bp = (SolnPtr) allocate(sizeof (Soln));
 #endif
 
    if (bp != (SolnPtr) 0) {
@@ -197,8 +199,8 @@ void freeSoln(p)
       pdestroy(p->t);
       pdestroy(p->r);
 #ifndef IGNOREFREE
-      free(p->e);			/* BitVector */
-      free(p);
+      deallocate(p->e);			/* BitVector */
+      deallocate(p);
 #endif
    }
 }
@@ -253,7 +255,7 @@ void freeEas(eas)
 	 ep++;
       }
 #ifndef IGNOREFREE
-      free(eas);
+      deallocate(eas);
 #endif
    }
 }
@@ -334,7 +336,7 @@ uvec pfactorbase(n, k, m, aborts)
 #ifdef BWGC 		 
    res = (uvec) gc_malloc(count * sizeof (unsigned));
 #else		 
-   res = (uvec) malloc(count * sizeof (unsigned));
+   res = (uvec) allocate(count * sizeof (unsigned));
 #endif
    if (res == (uvec) 0) goto doneMk;
 
@@ -379,7 +381,7 @@ EasPtr getEas(n, k, pm, m, aborts)
 #ifdef BWGC 		 
    eas = (EasPtr) gc_malloc((aborts+1) * sizeof (EasEntry));
 #else		 
-   eas = (EasPtr) malloc((aborts+1) * sizeof (EasEntry));
+   eas = (EasPtr) allocate((aborts+1) * sizeof (EasEntry));
 #endif
    if (eas == (EasPtr) 0) return eas;
 
@@ -533,14 +535,14 @@ precision pcfrac(n, maxCount)
 #ifdef BWGC 		 
    b      = (SolnPtr *) gc_malloc(bsize);
 #else		 
-   b      = (SolnPtr *) malloc(bsize);
+   b      = (SolnPtr *) allocate(bsize);
 #endif
    if (b == (SolnPtr *) 0) goto nomem;
 
 #ifdef BWGC 		 
    e = (solnvec) gc_malloc((m+1) * sizeof e[0]); 
 #else		 
-   e = (solnvec) malloc((m+1) * sizeof e[0]); 
+   e = (solnvec) allocate((m+1) * sizeof e[0]);
 #endif
    if (e == (solnvec) 0) {
 nomem:
@@ -699,8 +701,8 @@ bail:
    freeEas(eas);
    freeSolns(oddt);
 #ifndef IGNOREFREE
-   free(e);
-   free(pm);
+   deallocate(e);
+   deallocate(pm);
 #endif   
 
    pdestroy(r);  pdestroy(twog);   pdestroy(u);  pdestroy(lastU);

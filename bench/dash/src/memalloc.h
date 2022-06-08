@@ -37,6 +37,8 @@
 #include <stddef.h>
 #include <stdlib.h>
 
+#include "../../integrate.h"
+
 struct stackmark {
 	struct stack_block *stackp;
 	char *stacknxt;
@@ -98,4 +100,4 @@ static inline char *_STPUTC(int c, char *p) {
 #define ungrabstackstr(s, p) stunalloc((s))
 #define stackstrend() ((void *)sstrend)
 
-#define ckfree(p)	free((pointer)(p))
+#define ckfree(p)	deallocate((pointer)(p))

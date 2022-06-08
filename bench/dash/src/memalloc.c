@@ -52,7 +52,7 @@ ckmalloc(size_t nbytes)
 {
 	pointer p;
 
-	p = malloc(nbytes);
+	p = allocate(nbytes);
 	if (p == NULL)
 		sh_error("Out of space");
 	return p;
@@ -66,7 +66,7 @@ ckmalloc(size_t nbytes)
 pointer
 ckrealloc(pointer p, size_t nbytes)
 {
-	p = realloc(p, nbytes);
+	p = reallocate(p, nbytes);
 	if (p == NULL)
 		sh_error("Out of space");
 	return p;
