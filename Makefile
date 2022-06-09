@@ -12,6 +12,10 @@ OBJECT_FILES=bin/slab_pool.o \
 
 all: static
 
+shared:
+	@ echo "NOT SUPPORTED RIGHT NOW"
+	@ exit 4
+
 static: $(OBJECT_FILES)
 	$ $(AR) -rcs $(LIBRARY_NAME).a $(OBJECT_FILES)
 
