@@ -33,7 +33,12 @@ benchmark: static
 	sh bench/bench.sh
 
 clean:
+	# Clean build files
 	@ rm bin/*
+
+	# Clean benchmark files
+	cd bench/cfrac
+	make -C bench/cfrac -f oldMakefile clean
 
 help:
 	@echo "Targets:"
