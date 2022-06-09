@@ -8,6 +8,8 @@ PDIR 	= .
 # removed because I don't want to recompile every time I change header file
 #INCF 	= pfactor.h
 
+ADDITIONAL_FLAGS=
+
 CC 	= gcc
 CFLAGS  = -g -O
 
