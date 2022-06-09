@@ -29,7 +29,7 @@ benchmark: static
 	sh bench/bench.sh
 
 clean:
-	@ rm bin/*.o
+	@ rm bin/*
 
 help:
 	@echo "Targets:"
