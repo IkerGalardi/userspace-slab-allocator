@@ -7,9 +7,11 @@ mkdir -p bin
 echo "[+] Preparing benchmarks"
 echo "  [+] randomsize_fifo_synthetic"
 gcc bench/randomsize_fifo_synthetic.c -o bin/randomsize_fifo_synthetic $FLAGS || exit
-
-echo "  [+] randomsize_fifo_synthetic_smalloc"
 gcc bench/randomsize_fifo_synthetic.c -o bin/randomsize_fifo_synthetic_smalloc $FLAGS -DUSE_SMALLOC || exit
+
+echo "  [+] randomalloc_fifo_synthetic"
+gcc bench/randomalloc_synthetic.c -o bin/randomalloc_synthetic $FLAGS || exit
+gcc bench/randomalloc_synthetic.c -o bin/randomalloc_synthetic_smalloc $FLAGS -DUSE_SMALLOC || exit
 
 echo "  [+] cfrac"
 cd bench/cfrac
@@ -22,6 +24,13 @@ mv cfrac ../../bin/cfrac_smalloc
 cd ../..
 
 echo "[+] Executing benchmarks"
+echo "RANDOM PATTERN SYNTHETIC"
+echo "  · glibc allocator"
+nice -n -20 ./bin/randomalloc_synthetic || exit
+
+echo "  · slabed allocator"
+nice -n -20 ./bin/randomalloc_synthetic_smalloc || exit
+
 echo "RANDOM SIZE, FIFO FREE, SYNTHETIC"
 echo "  · glibc allocator"
 nice -n -20 ./bin/randomsize_fifo_synthetic || exit
