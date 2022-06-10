@@ -224,7 +224,6 @@ void* slab_pool_allocate(struct slab_pool* pool) {
 
 bool slab_pool_deallocate(struct slab_pool* pool, void* ptr) {
     debug("POOL: deallocating pointer %p\n", ptr);
-    assert((pool->grow_count != 0));
     
     // Fast path. If there is no magic number or the size is not the same, then we simply return that the pointer
     // was not allocater on this pool.
