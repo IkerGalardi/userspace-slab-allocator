@@ -230,11 +230,13 @@ bool slab_pool_deallocate(struct slab_pool* pool, void* ptr) {
     debug("\t* Freeing in the slab\n");
     mem_slab_dealloc(pool->list_start, ptr);
     
+    float allocatio_ratio = (float)pool->allocation_count / (float)pool->deallocation_count;
+
     // TODO: investigate if madvise(MADVISE_DONTUSE) is better in terms of performance
     //       and how to implement something like that.
     if((pool->list_start->ref_count == 0) && 
        (pool->list_start != pool->list_end) &&
-       (pool->allocation_count < pool->deallocation_count)) {
+       (allocatio_ratio < 0.5f)) {
         struct mem_slab* to_delete = pool->list_start;
         struct mem_slab* next =     slab->next;
 
