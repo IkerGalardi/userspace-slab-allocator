@@ -21,6 +21,21 @@
 
 int pool_stat_grow_count = 0;
 
+/*
+ * Returns the size of the slab list. Only for debugging purposes.
+ */
+MAYBE_UNUSED static int get_list_size(struct mem_slab* list_start) {
+    struct mem_slab* current = list_start;
+    int jumps = 0;
+
+    while(current != NULL) {
+        fflush(stdout);
+        jumps++;
+        current = current->next;
+    }
+
+    return jumps;
+}
 
 static struct mem_slab* get_last_from_list(struct mem_slab* slab) {
     struct mem_slab* current = slab;
@@ -31,6 +46,7 @@ static struct mem_slab* get_last_from_list(struct mem_slab* slab) {
 }
 
 static bool unmapping_heuristic_decision(struct slab_pool* pool) {
+    return false;
     float ratio = ((float)pool->grow_count) / ((float)pool->shrink_count);
     return ratio < 0.5;
 }
@@ -141,7 +157,7 @@ static struct mem_slab* get_slab_with_enough_space(struct slab_pool* pool) {
 
     debug("\t\t * First slab not free, need to grow the slab list\n");
 #ifdef POOL_CONFIG_PARANOID_ASSERTS
-    int list_size_before_growing = get_list_size(pool->list_start);
+    MAYBE_UNUSED int list_size_before_growing = get_list_size(pool->list_start);
     debug("\t\t * Finished getting the list size: %i\n", list_size_before_growing);
 #endif
 
@@ -167,7 +183,7 @@ static struct mem_slab* get_slab_with_enough_space(struct slab_pool* pool) {
     pool_stat_grow_count++;
 
 #ifdef POOL_CONFIG_PARANOID_ASSERTS
-    int list_size_after_growing = get_list_size(pool->list_start);
+    MAYBE_UNUSED int list_size_after_growing = get_list_size(pool->list_start);
     debug("\t\t * Finished getting the list size: %i\n", list_size_before_growing);
     //assert((list_size_before_growing == list_size_after_growing - POOL_GROW_RATE));
 

@@ -31,7 +31,7 @@ __attribute__((constructor)) void smalloc_initialize() {
 }
 
 void* smalloc(size_t size) {
-    assert((size >= 0) && "Allocation size must be bigger than 0"); 
+    assert((size != 0) && "Allocation size must be bigger than 0"); 
     debug("SMALLOC: Allocation of size %i\n", size);
 
     // Find a suitable cache and try to allocate on it.

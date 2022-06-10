@@ -4,6 +4,8 @@
 #include <stdbool.h>
 #include <unistd.h>
 
+#define NON_EXISTANT (uint16_t)(-1)
+
 #define SLAB_PAGE_SIZE sysconf(_SC_PAGESIZE)
 
 #define MAYBE_UNUSED __attribute__((unused))

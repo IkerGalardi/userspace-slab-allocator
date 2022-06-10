@@ -14,7 +14,6 @@
 
 #define SLAB_PAGE_SIZE sysconf(_SC_PAGESIZE)
 
-#define NON_EXISTANT (uint16_t)(-1)
 
 // State in which a slot inside a slab can be.
 #define SLOT_FREE 0

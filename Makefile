@@ -23,6 +23,8 @@ bin/%.o: src/%.c
 	$(CC) -o $@ -c $< $(CFLAGS) $(ADDITIONAL_FLAGS)
 
 test: static
+	make clean
+	make ADDITIONAL_FLAGS="-DSLAB_DEBUG -DDSLAB_CONFIG_PARANOID_ASSERTS -DPOOL_CONFIG_PARANOID_ASSERTS"
 	bash tests/test.sh
 
 install: static
