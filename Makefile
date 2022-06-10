@@ -23,14 +23,14 @@ bin/%.o: src/%.c
 	$(CC) -o $@ -c $< $(CFLAGS) $(ADDITIONAL_FLAGS)
 
 test: static
-	sh tests/test.sh
+	bash tests/test.sh
 
 install: static
 	cp $(LIBRARY_NAME).* /usr/lib64
 	cp src/*.h /usr/include
 
 benchmark: static
-	sh bench/bench.sh
+	bash bench/bench.sh
 
 clean:
 	# Clean build files
