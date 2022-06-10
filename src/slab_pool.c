@@ -14,7 +14,7 @@
 #endif
 
 #define POOL_START_SIZE  10 
-#define POOL_GROW_RATE   5 
+#define POOL_GROW_RATE   10 
 #define POOL_MAX_GROW_RATE   5 
 
 #define POOL_PAGE_SIZE sysconf(_SC_PAGESIZE)
@@ -28,6 +28,11 @@ static struct mem_slab* get_last_from_list(struct mem_slab* slab) {
         current = current->next;
     }
     return current;
+}
+
+static bool unmapping_heuristic_decision(struct slab_pool* pool) {
+    float ratio = ((float)pool->grow_count) / ((float)pool->shrink_count);
+    return ratio < 0.5;
 }
 
 /*
@@ -92,8 +97,8 @@ struct slab_pool slab_pool_create(size_t allocation_size) {
     result.list_end = get_last_from_list(first_slab);
     result.allocation_size = allocation_size;
 
-    result.allocation_count = 0;
-    result.deallocation_count = 0;
+    result.grow_count = 0;
+    result.shrink_count = 0;
 
 #ifdef POOL_CONFIG_DEBUG
     debug("POOL: created pool of size %i\n", result.allocation_size);
@@ -114,12 +119,6 @@ static struct mem_slab* get_slab_with_enough_space(struct slab_pool* pool) {
 
     assert((first_slab != NULL) && "List broken");
 
-    size_t grow_rate_multiplier = 1;
-    if(pool->allocation_count > pool->deallocation_count && pool->deallocation_count != 0) {
-        size_t difference = pool->allocation_count - pool->deallocation_count;
-        grow_rate_multiplier = ((difference < POOL_MAX_GROW_RATE) ? (difference) : POOL_MAX_GROW_RATE);
-    }
-
 #ifdef POOL_CONFIG_DEBUG
     int size = get_list_size(pool->list_start);
     debug("\t* Size of the list at the start is %i\n", size);
@@ -132,6 +131,13 @@ static struct mem_slab* get_slab_with_enough_space(struct slab_pool* pool) {
         debug("\t\t * Max allocations are %i\n", first_slab->max_refs);
         return first_slab;
     }
+
+    size_t grow_rate_multiplier = 1;
+    if(pool->grow_count > pool->shrink_count && pool->shrink_count != 0) {
+        size_t difference = pool->grow_count - pool->shrink_count;
+        grow_rate_multiplier = ((difference < POOL_MAX_GROW_RATE) ? (difference) : POOL_MAX_GROW_RATE);
+    }
+
 
     debug("\t\t * First slab not free, need to grow the slab list\n");
 #ifdef POOL_CONFIG_PARANOID_ASSERTS
@@ -177,7 +183,7 @@ void* slab_pool_allocate(struct slab_pool* pool) {
     struct mem_slab* slab_with_space = get_slab_with_enough_space(pool);
     assert((slab_with_space != NULL) && "NULL slab returned from get_slab_with_enough_space");
 
-    pool->allocation_count++;
+    pool->grow_count++;
 
     // Check if the slab is full, if it is move it to the end of the caches to ensure that
     // caches with enough capacity to allocate will always be at the start.
@@ -202,9 +208,8 @@ void* slab_pool_allocate(struct slab_pool* pool) {
 
 bool slab_pool_deallocate(struct slab_pool* pool, void* ptr) {
     debug("POOL: deallocating pointer %p\n", ptr);
-
-    pool->deallocation_count++;
-
+    assert((pool->grow_count != 0));
+    
     // Fast path. If there is no magic number or the size is not the same, then we simply return that the pointer
     // was not allocater on this pool.
     struct mem_slab* slab = get_page_pointer(ptr);
@@ -219,6 +224,8 @@ bool slab_pool_deallocate(struct slab_pool* pool, void* ptr) {
         debug("\t* Slab not on this pool, returning\n");
         return false;
     }
+                                                                 
+    pool->shrink_count++;
 
     // If the slab is not already at the start of the pool, move it to the start.
     if(slab != pool->list_start) {
@@ -230,20 +237,20 @@ bool slab_pool_deallocate(struct slab_pool* pool, void* ptr) {
     debug("\t* Freeing in the slab\n");
     mem_slab_dealloc(pool->list_start, ptr);
     
-    float allocatio_ratio = (float)pool->allocation_count / (float)pool->deallocation_count;
-
     // TODO: investigate if madvise(MADVISE_DONTUSE) is better in terms of performance
     //       and how to implement something like that.
     if((pool->list_start->ref_count == 0) && 
-       (pool->list_start != pool->list_end) &&
-       (allocatio_ratio < 0.5f)) {
-        struct mem_slab* to_delete = pool->list_start;
-        struct mem_slab* next =     slab->next;
+       (pool->list_start != pool->list_end)) 
+    {
+        if(unmapping_heuristic_decision(pool)) {
+            struct mem_slab* to_delete = pool->list_start;
+            struct mem_slab* next =     slab->next;
 
-        pool->list_start = next;
-        next->prev = NULL;
+            pool->list_start = next;
+            next->prev = NULL;
 
-        mem_slab_free(to_delete);
+            mem_slab_free(to_delete);
+        }
     }
 
     return true;

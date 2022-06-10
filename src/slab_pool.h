@@ -12,8 +12,8 @@ struct slab_pool {
     
     size_t allocation_size;
 
-    size_t allocation_count;
-    size_t deallocation_count;
+    size_t grow_count;
+    size_t shrink_count;
 };
 
 /*
