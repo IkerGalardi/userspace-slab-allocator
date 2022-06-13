@@ -57,7 +57,7 @@ struct benchmark_parameters get_params(int argc, char** argv) {
     };
 
     int option = 0;
-    while((option = getopt(argc, argv, "a:b:")) != -1) {
+    while((option = getopt(argc, argv, "a:b:d:")) != -1) {
         switch(option) {
         case 'a':
             result.alpha = atoi(optarg);

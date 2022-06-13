@@ -24,19 +24,19 @@ mv cfrac ../../bin/cfrac_smalloc
 cd ../..
 
 echo "[+] Executing benchmarks"
-echo "RANDOM PATTERN SYNTHETIC"
-echo "  · glibc allocator"
-nice -n -20 ./bin/randomalloc_synthetic || exit
-
-echo "  · slabed allocator"
-nice -n -20 ./bin/randomalloc_synthetic_smalloc || exit
-
 echo "RANDOM SIZE, FIFO FREE, SYNTHETIC"
 echo "  · glibc allocator"
 nice -n -20 ./bin/randomsize_fifo_synthetic || exit
 
 echo "  · slabed allocator"
 nice -n -20 ./bin/randomsize_fifo_synthetic_smalloc || exit
+
+echo "RANDOM PATTERN SYNTHETIC"
+echo "  · glibc allocator"
+nice -n -20 ./bin/randomalloc_synthetic -d 20 || exit
+
+echo "  · slabed allocator"
+nice -n -20 ./bin/randomalloc_synthetic_smalloc -d 20 || exit
 
 echo
 echo "CFRAC"
