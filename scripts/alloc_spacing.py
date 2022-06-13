@@ -11,6 +11,8 @@ def parse_inside_parenthesis(line):
         #       NULL. So we have to take that into account
         if str_inside_par == 'nil':
             return 0
+
+        print(line)
         return int(str_inside_par, 16)
     else:
         return 0
@@ -35,12 +37,13 @@ distances = []
 
 i = 0
 for line in file_lines:
-    if "malloc" in line:
+    if line.startswith("malloc"):
         splited = line.split('=')
         returned_addr = int(splited[-1].strip(), 16)
         pointers.append([returned_addr, i])
         i = i + 1
-    elif "free" in line:
+    elif line.startswith("free"):
+        print(line)
         ptr_int = parse_inside_parenthesis(line)
         if ptr_int == 0:
             continue
