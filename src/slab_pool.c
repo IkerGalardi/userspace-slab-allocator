@@ -117,7 +117,7 @@ struct slab_pool slab_pool_create(size_t allocation_size) {
     result.shrink_count = 0;
 
 #ifdef POOL_CONFIG_DEBUG
-    debug("POOL: created pool of size %i\n", result.allocation_size);
+    debug("POOL: created pool of size %li\n", result.allocation_size);
     int size = get_list_size(result.list_start);
     debug("\t* Size of the list at the start is %i\n", size);
 #endif // POOL_CONFIG_DEBUG
@@ -131,7 +131,7 @@ struct slab_pool slab_pool_create(size_t allocation_size) {
  */
 static struct mem_slab* get_slab_with_enough_space(struct slab_pool* pool) {
     struct mem_slab* first_slab = pool->list_start;
-    debug("\t* First slab of the list is %p\n", first_slab);
+    debug("\t* First slab of the list is %p\n", (void*)first_slab);
 
     assert((first_slab != NULL) && "List broken");
 
@@ -142,7 +142,7 @@ static struct mem_slab* get_slab_with_enough_space(struct slab_pool* pool) {
 
     // If the first slab has enough space simply return the first slab.
     if(first_slab->ref_count < first_slab->max_refs) {
-        debug("\t\t * First slab already free, returning %p\n", first_slab);
+        debug("\t\t * First slab already free, returning %p\n", (void*)first_slab);
         debug("\t\t * Reference count is %i\n", first_slab->ref_count);
         debug("\t\t * Max allocations are %i\n", first_slab->max_refs);
         return first_slab;
@@ -166,7 +166,7 @@ static struct mem_slab* get_slab_with_enough_space(struct slab_pool* pool) {
     move_slab_to_end_of_the_list(pool, first_slab);
     first_slab = pool->list_start;
     if(first_slab->ref_count < first_slab->max_refs) {
-        debug("\t\t * First slab already free, returning %p\n", first_slab);
+        debug("\t\t * First slab already free, returning %p\n", (void*)first_slab);
         debug("\t\t * Reference count is %i\n", first_slab->ref_count);
         debug("\t\t * Max allocations are %i\n", first_slab->max_refs);
         return first_slab;
@@ -178,7 +178,7 @@ static struct mem_slab* get_slab_with_enough_space(struct slab_pool* pool) {
                                                          POOL_GROW_RATE * grow_rate_multiplier, 
                                                          first_slab);
     pool->list_start = new_first;
-    debug("\t\t * Appended new slab %p to the list\n", new_first);
+    debug("\t\t * Appended new slab %p to the list\n", (void*)new_first);
 
     pool_stat_grow_count++;
 
@@ -232,7 +232,7 @@ bool slab_pool_deallocate(struct slab_pool* pool, void* ptr) {
         return false;
     }
 
-    debug("\t* Slab containing pointer is %p\n", slab);
+    debug("\t* Slab containing pointer is %p\n", (void*)slab);
     
     // If the pointer was not allocated on any slab then simply return false.
     if(slab == NULL) {

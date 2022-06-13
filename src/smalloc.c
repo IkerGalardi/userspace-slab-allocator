@@ -11,7 +11,7 @@
 #include "internal_assert.h"
 
 #ifdef SMALLOC_CONFIG_DEBUG
-    #define debug(...) fprintf(stderr, __VA_ARGS__)
+    #define debug(...) fprintf(stderr, __VA_ARGS__); fflush(stderr)
 #else
     #define debug(...)
 #endif
@@ -32,7 +32,7 @@ __attribute__((constructor)) void smalloc_initialize() {
 
 void* smalloc(size_t size) {
     assert((size != 0) && "Allocation size must be bigger than 0"); 
-    debug("SMALLOC: Allocation of size %i\n", size);
+    debug("SMALLOC: Allocation of size %lu\n", size);
 
     // Find a suitable cache and try to allocate on it.
     // NOTE: Assumes that the cache configuration sizes are sorted.

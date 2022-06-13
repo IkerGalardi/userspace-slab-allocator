@@ -7,7 +7,7 @@ inline bool is_ptr_in_page(const void* page, const void* ptr) {
     return (ptr > page) && (page_end > ptr);
 }
 
-void* get_page_pointer(void* ptr) {
+inline void* get_page_pointer(void* ptr) {
     // NOTE: assumes 4k pages. maybe some way to detect 16k pages?
     return (void*)((uintptr_t)ptr & (~0xFFF));
 }
