@@ -1,5 +1,5 @@
-#ifndef CACHE_POOL_H
-#define CACHE_POOL_H
+#ifndef SLAB_POOL_H
+#define SLAB_POOL_H
 
 #include <stdbool.h>
 #include <stddef.h>
@@ -35,4 +35,4 @@ void* slab_pool_allocate(struct slab_pool* pool);
  */
 bool slab_pool_deallocate(struct slab_pool* pool, void* ptr);
 
-#endif // CACHE_POOL_H
+#endif // SLAB_POOL_H
