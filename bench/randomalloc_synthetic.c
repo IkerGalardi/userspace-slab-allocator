@@ -12,13 +12,7 @@
 #include <gsl/gsl_rng.h>
 #include <gsl/gsl_randist.h>
 
-#ifdef USE_SMALLOC
-    #define allocate(x)   smalloc(x)
-    #define deallocate(x) sfree(x)
-#else
-    #define allocate(x)   malloc(x)
-    #define deallocate(x) free(x)
-#endif // USE_SMALLOC
+#include "integrate.h"
 
 #define MAX_ALLOCATION_SIZE 8000
 

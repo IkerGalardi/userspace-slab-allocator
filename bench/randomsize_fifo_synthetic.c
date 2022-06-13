@@ -8,13 +8,7 @@
 #include <gsl/gsl_rng.h>
 #include <gsl/gsl_randist.h>
 
-#ifdef USE_SMALLOC
-    #define allocate(x)   malloc(x)
-    #define deallocate(x) free(x)
-#else
-    #define allocate(x)   malloc(x)
-    #define deallocate(x) free(x)
-#endif // USE_SMALLOC
+#include "integrate.h"
 
 #define ITERATION_COUNT 100
 #define ALLOCATION_COUNT 1000000
