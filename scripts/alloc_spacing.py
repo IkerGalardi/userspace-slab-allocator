@@ -6,6 +6,11 @@ import numpy as np
 def parse_inside_parenthesis(line):
     if '(' in line and ')' in line:
         str_inside_par = line[line.find("(")+1:line.find(")")]
+
+        # NOTE: this should not be needed, but programs like bash try to free
+        #       NULL. So we have to take that into account
+        if str_inside_par == 'nil':
+            return 0
         return int(str_inside_par, 16)
     else:
         return 0
@@ -14,7 +19,11 @@ def find_ptr_in_list(list, ptr):
     for ptr_index_pair in list:
         if ptr_index_pair[0] == ptr:
             return ptr_index_pair
-    print("DID NOT FIND")
+
+    # NOTE: this should not be needed, but programs like bash try
+    #       to free memory not previously allocated with malloc
+    #       (maybe allocated with strdup? maybe programming error?)
+    return [-1, 0]
     exit(4)
 
 
@@ -37,6 +46,12 @@ for line in file_lines:
             continue
 
         malloc_i = find_ptr_in_list(pointers, ptr_int)[1]
+
+        # NOTE: this should not be needed, but programs like bash try
+        #       to free memory not previously allocated with malloc
+        #       (maybe allocated with strdup? maybe programming error?)
+        if malloc_i == -1:
+            continue
         distances.append(i - malloc_i)
         print(distances[-1])
 
