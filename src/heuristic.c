@@ -1,5 +1,7 @@
 #include "heuristic.h"
 
+#include <stdio.h>
+
 #include "utils.h"
 
 int heuristic_decision_grow_count(struct heuristic_params params, struct heuristic_data data) {
@@ -12,7 +14,10 @@ bool heuristic_decision_does_unmap(struct heuristic_params params, struct heuris
     
     float ratio = (float)data.allocation_count / (float)data.deallocation_count;
     
-    if(ratio > 0.5f) {
+    //printf("Ratio = %f\n", ratio);
+    //return true;
+    
+    if(ratio < 0.3f) {
         return true;
     } else {
         return false;
