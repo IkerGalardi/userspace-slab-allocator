@@ -3,6 +3,8 @@
 import sys
 import numpy as np
 
+MAX_ANALYSIS = 1000000
+
 def parse_inside_parenthesis(line):
     if '(' in line and ')' in line:
         str_inside_par = line[line.find("(")+1:line.find(")")]
@@ -12,7 +14,6 @@ def parse_inside_parenthesis(line):
         if str_inside_par == 'nil':
             return 0
 
-        print(line)
         return int(str_inside_par, 16)
     else:
         return 0
@@ -43,7 +44,6 @@ for line in file_lines:
         pointers.append([returned_addr, i])
         i = i + 1
     elif line.startswith("free"):
-        print(line)
         ptr_int = parse_inside_parenthesis(line)
         if ptr_int == 0:
             continue
@@ -55,10 +55,13 @@ for line in file_lines:
         #       (maybe allocated with strdup? maybe programming error?)
         if malloc_i == -1:
             continue
-        distances.append(i - malloc_i)
-        print(distances[-1])
+        distance = i - malloc_i
+        distances.append(distance)
 
         i = i + 1
+
+        if i > MAX_ANALYSIS:
+            break
 
 nparray = np.array(distances)
 print( "Allocation distance data:")
