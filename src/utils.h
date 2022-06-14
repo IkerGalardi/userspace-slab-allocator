@@ -10,6 +10,8 @@
 
 #define MAYBE_UNUSED __attribute__((unused))
 
+#define UNUSED_PARAMETER(x) (void)(x)
+
 /*
  * Returns true if the pointer is allocated on the page.
  *
