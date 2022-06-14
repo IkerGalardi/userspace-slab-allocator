@@ -16,12 +16,12 @@
     #define debug(...)
 #endif
 
-#define SMALLOC_CACHE_COUNT 4
+#define SMALLOC_CACHE_COUNT 6
 struct slab_pool pools[SMALLOC_CACHE_COUNT];
 
 __attribute__((constructor)) void smalloc_initialize() {
     // NOTE: editing this array will change the cache configuration of smalloc
-    size_t cache_sizes[SMALLOC_CACHE_COUNT] = { 8, 16, 24, 32 };
+    size_t cache_sizes[SMALLOC_CACHE_COUNT] = { 8, 16, 32, 64, 128, 256 };
 
     // Initialize the caches using the configuration
     debug("SMALLOC: creating %i caches at initialization\n", SMALLOC_CACHE_COUNT);
