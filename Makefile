@@ -25,14 +25,14 @@ bin/%.o: src/%.c
 test: static
 	make clean
 	make ADDITIONAL_FLAGS="-DSLAB_DEBUG -DDSLAB_CONFIG_PARANOID_ASSERTS -DPOOL_CONFIG_PARANOID_ASSERTS"
-	bash tests/test.sh
+	bash scripts/test.sh
 
 install: static
 	cp $(LIBRARY_NAME).* /usr/lib64
 	cp src/*.h /usr/include
 
 benchmark: static
-	bash bench/bench.sh
+	bash scripts/bench.sh
 
 clean:
 	# Clean build files
