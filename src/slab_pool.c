@@ -46,7 +46,6 @@ static struct mem_slab* get_last_from_list(struct mem_slab* slab) {
 }
 
 static bool unmapping_heuristic_decision(struct slab_pool* pool) {
-    return false;
     float ratio = ((float)pool->grow_count) / ((float)pool->shrink_count);
     return ratio < 0.5;
 }
@@ -142,14 +141,8 @@ static struct mem_slab* grow_slab_list(struct slab_pool* pool) {
     size_t grow_rate_multiplier = 0;
     if(pool->grow_count > pool->shrink_count) {
         size_t difference = pool->grow_count - pool->shrink_count;
-        printf("Difference = %lu\n", difference);
         grow_rate_multiplier = ((difference < POOL_MAX_GROW_RATE) ? (difference) : POOL_MAX_GROW_RATE);
     }
-
-    printf("Grow_rate_multiplier = %lu\n", grow_rate_multiplier);
-    printf("pool->grow_count = %lu\n", pool->grow_count);
-    printf("pool->shrink_count = %lu\n", pool->shrink_count);
-
 
     debug("\t\t * First slab not free, need to grow the slab list\n");
 #ifdef POOL_CONFIG_PARANOID_ASSERTS
