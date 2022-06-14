@@ -19,8 +19,6 @@
 
 #define POOL_PAGE_SIZE sysconf(_SC_PAGESIZE)
 
-int pool_stat_grow_count = 0;
-
 /*
  * Returns the size of the slab list. Only for debugging purposes.
  */
@@ -172,8 +170,6 @@ static struct mem_slab* get_slab_with_enough_space(struct slab_pool* pool) {
                                                          first_slab);
     pool->list_start = new_first;
     debug("\t\t * Appended new slab %p to the list\n", (void*)new_first);
-
-    pool_stat_grow_count++;
 
 #ifdef POOL_CONFIG_PARANOID_ASSERTS
     MAYBE_UNUSED int list_size_after_growing = get_list_size(pool->list_start);
