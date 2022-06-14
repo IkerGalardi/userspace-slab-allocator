@@ -3,6 +3,11 @@
 
 #include <stddef.h>
 
+struct smalloc_stats {
+    size_t slab_allocations;
+    size_t system_allocations;
+};
+
 /*
  * Initializes all the slabs.
  */
@@ -26,5 +31,10 @@ void* srealloc(void* ptr, size_t size);
  * @param ptr: pointer to free 
  */
 void sfree(void* ptr);
+
+/*
+ * Return the statistics.
+ */
+struct smalloc_stats smalloc_get_stats();
 
 #endif // SMALLOC_H
