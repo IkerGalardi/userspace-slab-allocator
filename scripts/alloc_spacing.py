@@ -65,7 +65,7 @@ for line in file_lines:
 
 nparray = np.array(distances)
 print( "Allocation distance data:")
-print(f"  · Minimum distance = {np.amin(nparray)}")
-print(f"  · Maximum distance = {np.amax(nparray)}")
+print(f"  · Minimum size = {np.amin(nparray)}")
+print(f"  · Maximum size = {np.amax(nparray)}")
 print(f"  · Mean = {np.mean(nparray)}")
 print(f"  · Median = {np.median(nparray)}")

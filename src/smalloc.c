@@ -16,8 +16,6 @@
     #define debug(...)
 #endif
 
-static struct smalloc_stats stats = {0, 0};
-
 #define SMALLOC_CACHE_COUNT 6
 struct slab_pool pools[SMALLOC_CACHE_COUNT];
 
@@ -40,12 +38,9 @@ void* smalloc(size_t size) {
     // NOTE: Assumes that the cache configuration sizes are sorted.
     for(int i = 0; i < SMALLOC_CACHE_COUNT; i++) {
         if(size <= pools[i].allocation_size) {
-            stats.slab_allocations++;
             return slab_pool_allocate(pools + i);
         }
     }
-
-    stats.system_allocations++;
 
     // If this point is reached, means that no cache is suitable for allocating the
     // given size.
@@ -93,16 +88,12 @@ void sfree(void* ptr) {
     }
 
     for(int i = 0; i < SMALLOC_CACHE_COUNT; i++) {
-        struct slab_pool* current_pool = pools + i;
-        if(current_pool->allocation_size == slab->size) {
-            assert(slab_pool_deallocate (current_pool, ptr) == true);
+        if(slab_pool_deallocate(pools + i, ptr)) {
+            // When the pool deallocation returns true the ptr was in the cache, so we can return
+            // from the function.
             return;
         }
     }
 
     assert_not_reached();
-}
-
-struct smalloc_stats smalloc_get_stats() {
-    return stats;
 }
