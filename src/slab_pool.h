@@ -5,6 +5,7 @@
 #include <stddef.h>
 
 #include "slab.h"
+#include "heuristic.h"
 
 struct slab_pool {
     struct mem_slab* list_start;
@@ -12,8 +13,8 @@ struct slab_pool {
     
     size_t allocation_size;
 
-    size_t grow_count;
-    size_t shrink_count;
+    struct heuristic_params params;
+    struct heuristic_data data;
 };
 
 /*
