@@ -15,7 +15,7 @@
 
 #define POOL_START_SIZE  10 
 #define POOL_GROW_RATE   10 
-#define POOL_MAX_GROW_RATE   5 
+#define POOL_MAX_GROW_RATE   10
 
 #define POOL_PAGE_SIZE sysconf(_SC_PAGESIZE)
 
@@ -129,10 +129,9 @@ struct slab_pool slab_pool_create(size_t allocation_size) {
  * Returns a non-full slab from a pool. If there is no slab cache available it will allocate a new
  * one and return it. If a NULL slab is returned the system is probably OOM.
  */
-static struct mem_slab* get_slab_with_enough_space(struct slab_pool* pool) {
+static struct mem_slab* grow_slab_list(struct slab_pool* pool) {
     struct mem_slab* first_slab = pool->list_start;
     debug("\t* First slab of the list is %p\n", (void*)first_slab);
-
     assert((first_slab != NULL) && "List broken");
 
 #ifdef POOL_CONFIG_DEBUG
@@ -140,19 +139,16 @@ static struct mem_slab* get_slab_with_enough_space(struct slab_pool* pool) {
     debug("\t* Size of the list at the start is %i\n", size);
 #endif // POOL_CONFIG_DEBUG
 
-    // If the first slab has enough space simply return the first slab.
-    if(first_slab->ref_count < first_slab->max_refs) {
-        debug("\t\t * First slab already free, returning %p\n", (void*)first_slab);
-        debug("\t\t * Reference count is %i\n", first_slab->ref_count);
-        debug("\t\t * Max allocations are %i\n", first_slab->max_refs);
-        return first_slab;
-    }
-
-    size_t grow_rate_multiplier = 1;
-    if(pool->grow_count > pool->shrink_count && pool->shrink_count != 0) {
+    size_t grow_rate_multiplier = 0;
+    if(pool->grow_count > pool->shrink_count) {
         size_t difference = pool->grow_count - pool->shrink_count;
+        printf("Difference = %lu\n", difference);
         grow_rate_multiplier = ((difference < POOL_MAX_GROW_RATE) ? (difference) : POOL_MAX_GROW_RATE);
     }
+
+    printf("Grow_rate_multiplier = %lu\n", grow_rate_multiplier);
+    printf("pool->grow_count = %lu\n", pool->grow_count);
+    printf("pool->shrink_count = %lu\n", pool->shrink_count);
 
 
     debug("\t\t * First slab not free, need to grow the slab list\n");
@@ -175,7 +171,7 @@ static struct mem_slab* get_slab_with_enough_space(struct slab_pool* pool) {
     // Create a new slab and append it to the start of the pool
     struct mem_slab* new_first = mem_slab_create_several(pool->allocation_size, 
                                                          0, 
-                                                         POOL_GROW_RATE * grow_rate_multiplier, 
+                                                         POOL_GROW_RATE + grow_rate_multiplier,
                                                          first_slab);
     pool->list_start = new_first;
     debug("\t\t * Appended new slab %p to the list\n", (void*)new_first);
@@ -196,23 +192,24 @@ static struct mem_slab* get_slab_with_enough_space(struct slab_pool* pool) {
 void* slab_pool_allocate(struct slab_pool* pool) {
     debug("POOL: allocating memory...\n");
     debug("\t* Getting free slab...\n");
-    struct mem_slab* slab_with_space = get_slab_with_enough_space(pool);
     assert((slab_with_space != NULL) && "NULL slab returned from get_slab_with_enough_space");
 
+    struct mem_slab* first_slab = pool->list_start;
     pool->grow_count++;
 
     // Check if the slab is full, if it is move it to the end of the caches to ensure that
     // caches with enough capacity to allocate will always be at the start.
-    bool slab_full = slab_with_space->ref_count == slab_with_space->max_refs;
+    bool slab_full = first_slab->ref_count == first_slab->max_refs;
     debug("\t* Slab full? %i\n", slab_full); 
-    if(slab_full && (slab_with_space != pool->list_end)) {
+    if(slab_full && (first_slab != pool->list_end)) {
         debug("\t* Moving the slab to the end of the cache\n"); 
-
-        move_slab_to_end_of_the_list(pool, slab_with_space);
+        move_slab_to_end_of_the_list(pool, first_slab);
     }
 
+    first_slab = grow_slab_list(pool);
+
     // Allocate the pointer to be returned
-    void* result = mem_slab_alloc(slab_with_space);
+    void* result = mem_slab_alloc(first_slab);
 
 #ifdef POOL_CONFIG_PARANOID_ASSERTS
     assert((result != NULL) && "Slab full when it should not");
