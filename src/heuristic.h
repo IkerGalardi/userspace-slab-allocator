@@ -4,6 +4,9 @@
 #include <stdbool.h>
 #include <stddef.h>
 
+// TODO: temporal information would be good for more advanced 
+//       heuristics.
+
 struct heuristic_params {
     size_t default_grow_rate;
     size_t max_grow_rate;
