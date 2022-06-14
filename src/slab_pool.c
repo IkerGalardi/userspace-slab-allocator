@@ -46,7 +46,7 @@ static struct mem_slab* get_last_from_list(struct mem_slab* slab) {
 }
 
 static bool unmapping_heuristic_decision(struct slab_pool* pool) {
-    return false;
+    return true;
     float ratio = ((float)pool->grow_count) / ((float)pool->shrink_count);
     return ratio < 0.5;
 }
