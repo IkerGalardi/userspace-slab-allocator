@@ -105,8 +105,9 @@ struct slab_pool slab_pool_create(size_t allocation_size) {
     result.list_end = get_last_from_list(first_slab);
     result.allocation_size = allocation_size;
 
+    result.params.minimum_empty_slabs = POOL_GROW_RATE + POOL_MAX_GROW_RATE;
     result.params.default_grow_rate = POOL_GROW_RATE;
-    result.params.max_grow_rate = POOL_MAX_GROW_RATE;
+    result.params.max_grow_rate = POOL_GROW_RATE + POOL_MAX_GROW_RATE;
     
     result.data.allocation_count = 0;
     result.data.deallocation_count = 0;

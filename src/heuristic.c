@@ -10,16 +10,6 @@ int heuristic_decision_grow_count(struct heuristic_params params, struct heurist
 }
 
 bool heuristic_decision_does_unmap(struct heuristic_params params, struct heuristic_data data) {
-    UNUSED_PARAMETER(params);
-    
-    float ratio = (float)data.allocation_count / (float)data.deallocation_count;
-    
-    //printf("Ratio = %f\n", ratio);
-    //return true;
-    
-    if(ratio < 0.3f) {
-        return true;
-    } else {
-        return false;
-    }
+    size_t empty_slabs = data.grow_count - data.shrink_count;
+    return empty_slabs <= params.minimum_empty_slabs;
 }

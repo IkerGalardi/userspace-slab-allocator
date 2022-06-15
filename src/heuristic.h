@@ -8,6 +8,7 @@
 //       heuristics.
 
 struct heuristic_params {
+    size_t minimum_empty_slabs;
     size_t default_grow_rate;
     size_t max_grow_rate;
 };
