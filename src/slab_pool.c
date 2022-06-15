@@ -110,7 +110,7 @@ struct slab_pool slab_pool_create(size_t allocation_size) {
     
     result.data.allocation_count = 0;
     result.data.deallocation_count = 0;
-    result.data.grow_count = 1;
+    result.data.grow_count = POOL_START_SIZE;
     result.data.shrink_count = 0;
 
 #ifdef POOL_CONFIG_DEBUG
@@ -180,7 +180,7 @@ static struct mem_slab* get_slab_with_enough_space(struct slab_pool* pool) {
 #endif
     
     // Tell the heuristic that we growed.
-    pool->data.grow_count++;
+    pool->data.grow_count += grow_count;
 
     return new_first;
 }
@@ -257,6 +257,8 @@ bool slab_pool_deallocate(struct slab_pool* pool, void* ptr) {
             next->prev = NULL;
 
             mem_slab_free(to_delete);
+            
+            pool->data.shrink_count++;
         }
     }
 
