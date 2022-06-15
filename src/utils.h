@@ -14,18 +14,6 @@
 #define UNUSED_PARAMETER(x) (void)(x)
 
 /*
- * Returns true if the pointer is allocated on the page.
- *
- * @param page: pointer to the start of the page
- * @param ptr: pointer to be tested
- * @return true if the pointer belongs in the page, false if not.
- */
-static __attribute__((always_inline)) inline bool is_ptr_in_page(const void* page, const void* ptr) {
-    const void* page_end = (const void*)((const uint8_t*)page + SLAB_PAGE_SIZE);
-    return (ptr > page) && (page_end > ptr);
-}
-
-/*
  * Returns the pointer to the start of the page given a pointer.
  *
  * @param ptr: pointer to find the start of the page
@@ -35,5 +23,17 @@ static __attribute__((always_inline)) inline void* get_page_pointer(void* ptr) {
     // NOTE: assumes 4k pages. maybe some way to detect 16k pages?
     return (void*)((uintptr_t)ptr & (~0xFFF));
 }
+
+/*
+ * Returns true if the pointer is allocated on the page.
+ *
+ * @param page: pointer to the start of the page
+ * @param ptr: pointer to be tested
+ * @return true if the pointer belongs in the page, false if not.
+ */
+static __attribute__((always_inline)) inline bool is_ptr_in_page(const void* page, const void* ptr) {
+    return get_page_pointer(ptr) == page;
+}
+
 
 #endif // SLAB_UTILS_H
