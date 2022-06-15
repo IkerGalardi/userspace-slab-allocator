@@ -3,6 +3,7 @@
 
 #include <stdbool.h>
 #include <unistd.h>
+#include <stdint.h>
 
 #define NON_EXISTANT (uint16_t)(-1)
 
@@ -19,7 +20,10 @@
  * @param ptr: pointer to be tested
  * @return true if the pointer belongs in the page, false if not.
  */
-bool is_ptr_in_page(const void* page, const void* ptr);
+static __attribute__((always_inline)) inline bool is_ptr_in_page(const void* page, const void* ptr) {
+    const void* page_end = (const void*)((const uint8_t*)page + SLAB_PAGE_SIZE);
+    return (ptr > page) && (page_end > ptr);
+}
 
 /*
  * Returns the pointer to the start of the page given a pointer.
@@ -27,6 +31,9 @@ bool is_ptr_in_page(const void* page, const void* ptr);
  * @param ptr: pointer to find the start of the page
  * @return: pointer to the start of the page of 'ptr'
  */
-void* get_page_pointer(void* ptr);
+static __attribute__((always_inline)) inline void* get_page_pointer(void* ptr) {
+    // NOTE: assumes 4k pages. maybe some way to detect 16k pages?
+    return (void*)((uintptr_t)ptr & (~0xFFF));
+}
 
 #endif // SLAB_UTILS_H
