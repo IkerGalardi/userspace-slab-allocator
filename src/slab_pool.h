@@ -34,6 +34,6 @@ void* slab_pool_allocate(struct slab_pool* pool);
  * Tries to deallocate a pointer. If the pointer was allocated on the pool true is returned, else
  * false is returned.
  */
-bool slab_pool_deallocate(struct slab_pool* pool, void* ptr);
+void slab_pool_deallocate(struct slab_pool* pool, void* ptr);
 
 #endif // SLAB_POOL_H

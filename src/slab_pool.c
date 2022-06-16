@@ -170,19 +170,13 @@ void* slab_pool_allocate(struct slab_pool* pool) {
     return result;
 }
 
-bool slab_pool_deallocate(struct slab_pool* pool, void* ptr) {
+void slab_pool_deallocate(struct slab_pool* pool, void* ptr) {
     assert(pool != NULL);
     assert(ptr != NULL);
     
     pool->data.deallocation_count++;
     
-    // If the slab has a different size, we dont care and return false as it's not
-    // our responsability.
     struct mem_slab* slab = (struct mem_slab*)get_page_pointer(ptr);
-    if(slab->size != pool->allocation_size) {
-        return false;
-    }
-    
     bool was_slab_full = slab->ref_count == slab->max_refs;
     
     mem_slab_dealloc(slab, ptr);
@@ -193,7 +187,7 @@ bool slab_pool_deallocate(struct slab_pool* pool, void* ptr) {
     // its imposible it has 0 allocations in it.
     if(was_slab_full && slab != pool->list_start) {
         move_slab_to_start_of_the_list(pool, slab);
-        return true;
+        return;
     }
                                                                                             
     // Ask hour super good heuristic if we need to nuke the slab from the list.
@@ -214,6 +208,4 @@ bool slab_pool_deallocate(struct slab_pool* pool, void* ptr) {
         
         pool->data.shrink_count++;
     }
-                                                                                            
-    return true;
 }

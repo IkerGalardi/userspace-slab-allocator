@@ -88,12 +88,9 @@ void sfree(void* ptr) {
     }
 
     for(int i = 0; i < SMALLOC_CACHE_COUNT; i++) {
-        if(slab_pool_deallocate(pools + i, ptr)) {
-            // When the pool deallocation returns true the ptr was in the cache, so we can return
-            // from the function.
-            return;
+        if(pools[i].allocation_size == slab->size) {
+            slab_pool_deallocate(pools + i, ptr);
+            break;
         }
     }
-
-    assert_not_reached();
 }
