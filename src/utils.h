@@ -19,7 +19,7 @@
  * @param ptr: pointer to find the start of the page
  * @return: pointer to the start of the page of 'ptr'
  */
-static __attribute__((always_inline)) inline void* get_page_pointer(void* ptr) {
+static __attribute__((always_inline)) inline void* get_page_pointer(const void* ptr) {
     // NOTE: assumes 4k pages. maybe some way to detect 16k pages?
     return (void*)((uintptr_t)ptr & (~0xFFF));
 }
