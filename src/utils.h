@@ -13,6 +13,8 @@
 
 #define UNUSED_PARAMETER(x) (void)(x)
 
+#define MIN(x, y) x > y ? y : x
+
 /*
  * Returns the pointer to the start of the page given a pointer.
  *
