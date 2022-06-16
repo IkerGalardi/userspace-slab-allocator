@@ -123,139 +123,91 @@ struct slab_pool slab_pool_create(size_t allocation_size) {
     return result;
 }
 
-/*
- * Returns a non-full slab from a pool. If there is no slab cache available it will allocate a new
- * one and return it. If a NULL slab is returned the system is probably OOM.
- */
-static struct mem_slab* get_slab_with_enough_space(struct slab_pool* pool) {
-    struct mem_slab* first_slab = pool->list_start;
-    debug("\t* First slab of the list is %p\n", (void*)first_slab);
-
-    assert((first_slab != NULL) && "List broken");
-
-#ifdef POOL_CONFIG_DEBUG
-    int size = get_list_size(pool->list_start);
-    debug("\t* Size of the list at the start is %i\n", size);
-#endif // POOL_CONFIG_DEBUG
-
-    // If the first slab has enough space simply return the first slab.
-    if(first_slab->ref_count < first_slab->max_refs) {
-        debug("\t\t * First slab already free, returning %p\n", (void*)first_slab);
-        debug("\t\t * Reference count is %i\n", first_slab->ref_count);
-        debug("\t\t * Max allocations are %i\n", first_slab->max_refs);
-        return first_slab;
-    }
-
-    debug("\t\t * First slab not free, need to grow the slab list\n");
-#ifdef POOL_CONFIG_PARANOID_ASSERTS
-    MAYBE_UNUSED int list_size_before_growing = get_list_size(pool->list_start);
-    debug("\t\t * Finished getting the list size: %i\n", list_size_before_growing);
-#endif
-
-    // Check the next. This is done because when creating several caches at the same
-    // time we have several free slots.
-    move_slab_to_end_of_the_list(pool, first_slab);
-    first_slab = pool->list_start;
-    if(first_slab->ref_count < first_slab->max_refs) {
-        debug("\t\t * First slab already free, returning %p\n", (void*)first_slab);
-        debug("\t\t * Reference count is %i\n", first_slab->ref_count);
-        debug("\t\t * Max allocations are %i\n", first_slab->max_refs);
-        return first_slab;
-    }
-
-    // Create a new slab and append it to the start of the pool
-    size_t grow_count = heuristic_decision_grow_count(pool->params, pool->data);
-    struct mem_slab* new_first = mem_slab_create_several(pool->allocation_size, 
-                                                         0, 
-                                                         grow_count, 
-                                                         first_slab);
-    pool->list_start = new_first;
-    debug("\t\t * Appended new slab %p to the list\n", (void*)new_first);
-
-#ifdef POOL_CONFIG_PARANOID_ASSERTS
-    MAYBE_UNUSED int list_size_after_growing = get_list_size(pool->list_start);
-    debug("\t\t * Finished getting the list size: %i\n", list_size_before_growing);
-    //assert((list_size_before_growing == list_size_after_growing - POOL_GROW_RATE));
-
-    assert((first_slab != pool->list_start));
-#endif
-    
-    // Tell the heuristic that we growed.
-    pool->data.grow_count += grow_count;
-
-    return new_first;
-}
-
 void* slab_pool_allocate(struct slab_pool* pool) {
-    debug("POOL: allocating memory...\n");
-    debug("\t* Getting free slab...\n");
-    struct mem_slab* slab_with_space = get_slab_with_enough_space(pool);
-    assert((slab_with_space != NULL) && "NULL slab returned from get_slab_with_enough_space");
-
-    pool->data.allocation_count++;
-
-    // Check if the slab is full, if it is move it to the end of the caches to ensure that
-    // caches with enough capacity to allocate will always be at the start.
-    bool slab_full = slab_with_space->ref_count == slab_with_space->max_refs;
-    debug("\t* Slab full? %i\n", slab_full); 
-    if(slab_full && (slab_with_space != pool->list_end)) {
-        debug("\t* Moving the slab to the end of the cache\n"); 
-
-        move_slab_to_end_of_the_list(pool, slab_with_space);
+    // TODO: add paranoid asserts with slab size.
+    assert(pool != NULL);
+    assert(pool->list_start != NULL);
+    
+    // If the first slab has space, simply allocate on it and return.
+    bool is_first_full = pool->list_start->ref_count == pool->list_start->max_refs;
+    if(!is_first_full) {
+        void* result = mem_slab_alloc(pool->list_start);
+        assert(result != NULL);
+        
+        return result;
     }
-
-    // Allocate the pointer to be returned
-    void* result = mem_slab_alloc(slab_with_space);
-
-#ifdef POOL_CONFIG_PARANOID_ASSERTS
-    assert((result != NULL) && "Slab full when it should not");
-#endif
-
-    debug("\t* Returning\n"); 
+                                                     
+    // If the first slab has no space, we need to move it to the end of the list
+    // and check the next one as creating several can lead to a situation where the 
+    // first is full but the next are completelly empty.
+    move_slab_to_end_of_the_list(pool, pool->list_start);
+    is_first_full = pool->list_start->ref_count == pool->list_start->max_refs;
+    if(!is_first_full) {
+        void* result = mem_slab_alloc(pool->list_start);
+        assert(result != NULL);
+        
+        return result;
+    } 
+    
+    // If the second one is still full, we have no choice but to create more 
+    // slabs. Important to move the full slab to the end in order to maintain 
+    // favorable ordering.
+    move_slab_to_end_of_the_list(pool, pool->list_start);
+    size_t grow_count = heuristic_decision_grow_count(pool->params, pool->data);
+    struct mem_slab* new_first = mem_slab_create_several(pool->allocation_size,
+                                                         0,
+                                                         grow_count,
+                                                         pool->list_start);
+    pool->list_start = new_first;
+    
+    // Allocate in the newly created slab and return.
+    void* result = mem_slab_alloc(pool->list_start);
+    assert(result != NULL);
     return result;
 }
 
 bool slab_pool_deallocate(struct slab_pool* pool, void* ptr) {
-    debug("POOL: deallocating pointer %p\n", ptr);
+    assert(pool != NULL);
+    assert(ptr != NULL);
     
-    pool->data.deallocation_count++;
-    
-    // Fast path. If there is no magic number or the size is not the same, then we simply return that the pointer
-    // was not allocater on this pool.
-    struct mem_slab* slab = get_page_pointer(ptr);
+    // If the slab has a different size, we dont care and return false as it's not
+    // our responsability.
+    struct mem_slab* slab = (struct mem_slab*)get_page_pointer(ptr);
     if(slab->size != pool->allocation_size) {
         return false;
     }
-
-    debug("\t* Slab containing pointer is %p\n", (void*)slab);
     
-    // If the slab is not already at the start of the pool, move it to the start.
-    if(slab != pool->list_start) {
-        debug("\t* Freed slab is not first in the list, moving it\n");
-
+    bool was_slab_full = slab->ref_count == slab->max_refs;
+    
+    mem_slab_dealloc(slab, ptr);
+    
+    // If the slab was full before deallocating the pointer we need to move it
+    // to the start of the list. This way, we can maintain free slabs first in order
+    // to speedup allocations. No need to check if the slab needs to be freed as
+    // its imposible it has 0 allocations in it.
+    if(was_slab_full && slab != pool->list_start) {
         move_slab_to_start_of_the_list(pool, slab);
+        return true;
     }
-
-    debug("\t* Freeing in the slab\n");
-    mem_slab_dealloc(pool->list_start, ptr);
-    
-    // TODO: investigate if madvise(MADVISE_DONTUSE) is better in terms of performance
-    //       and how to implement something like that.
-    if((pool->list_start->ref_count == 0) && 
-       (pool->list_start != pool->list_end)) 
-    {
-        if(heuristic_decision_does_unmap(pool->params, pool->data)) {
-            struct mem_slab* to_delete = pool->list_start;
-            struct mem_slab* next =     slab->next;
-
-            pool->list_start = next;
+                                                                                            
+    // Ask hour super good heuristic if we need to nuke the slab from the list.
+    bool heuristic_decision = heuristic_decision_does_unmap(pool->params, pool->data);
+    bool is_empty = slab->ref_count == 0;
+    bool is_lonely = slab->next == NULL && slab->prev == NULL;
+    if(is_empty && !is_lonely && heuristic_decision) {
+        struct mem_slab* prev = slab->prev;
+        struct mem_slab* next = slab->next;
+        
+        if(prev == NULL) {
             next->prev = NULL;
-
-            mem_slab_free(to_delete);
-            
-            pool->data.shrink_count++;
+            pool->list_start = next;
+        } else {
+            prev->next = next;
+            next->prev = prev;
         }
+                                                         
+        mem_slab_free(slab);
     }
-
+                                                                                            
     return true;
 }
