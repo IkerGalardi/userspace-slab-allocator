@@ -128,6 +128,8 @@ void* slab_pool_allocate(struct slab_pool* pool) {
     assert(pool != NULL);
     assert(pool->list_start != NULL);
     
+    pool->data.allocation_count++;
+    
     // If the first slab has space, simply allocate on it and return.
     bool is_first_full = pool->list_start->ref_count == pool->list_start->max_refs;
     if(!is_first_full) {
@@ -160,6 +162,8 @@ void* slab_pool_allocate(struct slab_pool* pool) {
                                                          pool->list_start);
     pool->list_start = new_first;
     
+    pool->data.grow_count += grow_count;
+    
     // Allocate in the newly created slab and return.
     void* result = mem_slab_alloc(pool->list_start);
     assert(result != NULL);
@@ -169,6 +173,8 @@ void* slab_pool_allocate(struct slab_pool* pool) {
 bool slab_pool_deallocate(struct slab_pool* pool, void* ptr) {
     assert(pool != NULL);
     assert(ptr != NULL);
+    
+    pool->data.deallocation_count++;
     
     // If the slab has a different size, we dont care and return false as it's not
     // our responsability.
@@ -197,7 +203,6 @@ bool slab_pool_deallocate(struct slab_pool* pool, void* ptr) {
     if(is_empty && !is_lonely && heuristic_decision) {
         struct mem_slab* prev = slab->prev;
         struct mem_slab* next = slab->next;
-        
         if(prev == NULL) {
             next->prev = NULL;
             pool->list_start = next;
@@ -205,8 +210,9 @@ bool slab_pool_deallocate(struct slab_pool* pool, void* ptr) {
             prev->next = next;
             next->prev = prev;
         }
-                                                         
         mem_slab_free(slab);
+        
+        pool->data.shrink_count++;
     }
                                                                                             
     return true;
