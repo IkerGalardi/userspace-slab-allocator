@@ -10,6 +10,10 @@ int heuristic_decision_grow_count(struct heuristic_params params, struct heurist
 }
 
 bool heuristic_decision_does_unmap(struct heuristic_params params, struct heuristic_data data) {
-    size_t empty_slabs = data.grow_count - data.shrink_count;
-    return empty_slabs <= params.minimum_empty_slabs;
+    size_t empty_slabs = data.total_count - data.full_count;
+    if(empty_slabs < params.minimum_empty_slabs) {
+        return false;
+    } else {
+        return true;
+    }
 }
