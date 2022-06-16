@@ -19,8 +19,6 @@
 
 #define POOL_PAGE_SIZE sysconf(_SC_PAGESIZE)
 
-int pool_stat_grow_count = 0;
-
 /*
  * Returns the size of the slab list. Only for debugging purposes.
  */
@@ -43,12 +41,6 @@ static struct mem_slab* get_last_from_list(struct mem_slab* slab) {
         current = current->next;
     }
     return current;
-}
-
-static bool unmapping_heuristic_decision(struct slab_pool* pool) {
-    return false;
-    float ratio = ((float)pool->grow_count) / ((float)pool->shrink_count);
-    return ratio < 0.5;
 }
 
 /*
@@ -113,8 +105,14 @@ struct slab_pool slab_pool_create(size_t allocation_size) {
     result.list_end = get_last_from_list(first_slab);
     result.allocation_size = allocation_size;
 
-    result.grow_count = 0;
-    result.shrink_count = 0;
+    result.params.minimum_empty_slabs = POOL_GROW_RATE + POOL_MAX_GROW_RATE;
+    result.params.default_grow_rate = POOL_GROW_RATE;
+    result.params.max_grow_rate = POOL_GROW_RATE + POOL_MAX_GROW_RATE;
+    
+    result.data.allocation_count = 0;
+    result.data.deallocation_count = 0;
+    result.data.grow_count = POOL_START_SIZE;
+    result.data.shrink_count = 0;
 
 #ifdef POOL_CONFIG_DEBUG
     debug("POOL: created pool of size %li\n", result.allocation_size);
@@ -148,13 +146,6 @@ static struct mem_slab* get_slab_with_enough_space(struct slab_pool* pool) {
         return first_slab;
     }
 
-    size_t grow_rate_multiplier = 1;
-    if(pool->grow_count > pool->shrink_count && pool->shrink_count != 0) {
-        size_t difference = pool->grow_count - pool->shrink_count;
-        grow_rate_multiplier = ((difference < POOL_MAX_GROW_RATE) ? (difference) : POOL_MAX_GROW_RATE);
-    }
-
-
     debug("\t\t * First slab not free, need to grow the slab list\n");
 #ifdef POOL_CONFIG_PARANOID_ASSERTS
     MAYBE_UNUSED int list_size_before_growing = get_list_size(pool->list_start);
@@ -173,14 +164,13 @@ static struct mem_slab* get_slab_with_enough_space(struct slab_pool* pool) {
     }
 
     // Create a new slab and append it to the start of the pool
+    size_t grow_count = heuristic_decision_grow_count(pool->params, pool->data);
     struct mem_slab* new_first = mem_slab_create_several(pool->allocation_size, 
                                                          0, 
-                                                         POOL_GROW_RATE * grow_rate_multiplier, 
+                                                         grow_count, 
                                                          first_slab);
     pool->list_start = new_first;
     debug("\t\t * Appended new slab %p to the list\n", (void*)new_first);
-
-    pool_stat_grow_count++;
 
 #ifdef POOL_CONFIG_PARANOID_ASSERTS
     MAYBE_UNUSED int list_size_after_growing = get_list_size(pool->list_start);
@@ -189,6 +179,9 @@ static struct mem_slab* get_slab_with_enough_space(struct slab_pool* pool) {
 
     assert((first_slab != pool->list_start));
 #endif
+    
+    // Tell the heuristic that we growed.
+    pool->data.grow_count += grow_count;
 
     return new_first;
 }
@@ -199,7 +192,7 @@ void* slab_pool_allocate(struct slab_pool* pool) {
     struct mem_slab* slab_with_space = get_slab_with_enough_space(pool);
     assert((slab_with_space != NULL) && "NULL slab returned from get_slab_with_enough_space");
 
-    pool->grow_count++;
+    pool->data.allocation_count++;
 
     // Check if the slab is full, if it is move it to the end of the caches to ensure that
     // caches with enough capacity to allocate will always be at the start.
@@ -225,23 +218,17 @@ void* slab_pool_allocate(struct slab_pool* pool) {
 bool slab_pool_deallocate(struct slab_pool* pool, void* ptr) {
     debug("POOL: deallocating pointer %p\n", ptr);
     
+    pool->data.deallocation_count++;
+    
     // Fast path. If there is no magic number or the size is not the same, then we simply return that the pointer
     // was not allocater on this pool.
     struct mem_slab* slab = get_page_pointer(ptr);
-    if(slab->slab_magic != SLAB_MAGIC_NUMBER || slab->size != pool->allocation_size) {
+    if(slab->size != pool->allocation_size) {
         return false;
     }
 
     debug("\t* Slab containing pointer is %p\n", (void*)slab);
     
-    // If the pointer was not allocated on any slab then simply return false.
-    if(slab == NULL) {
-        debug("\t* Slab not on this pool, returning\n");
-        return false;
-    }
-                                                                 
-    pool->shrink_count++;
-
     // If the slab is not already at the start of the pool, move it to the start.
     if(slab != pool->list_start) {
         debug("\t* Freed slab is not first in the list, moving it\n");
@@ -257,7 +244,7 @@ bool slab_pool_deallocate(struct slab_pool* pool, void* ptr) {
     if((pool->list_start->ref_count == 0) && 
        (pool->list_start != pool->list_end)) 
     {
-        if(unmapping_heuristic_decision(pool)) {
+        if(heuristic_decision_does_unmap(pool->params, pool->data)) {
             struct mem_slab* to_delete = pool->list_start;
             struct mem_slab* next =     slab->next;
 
@@ -265,6 +252,8 @@ bool slab_pool_deallocate(struct slab_pool* pool, void* ptr) {
             next->prev = NULL;
 
             mem_slab_free(to_delete);
+            
+            pool->data.shrink_count++;
         }
     }
 
