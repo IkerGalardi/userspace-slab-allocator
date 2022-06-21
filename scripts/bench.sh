@@ -25,18 +25,43 @@ cd ../..
 
 echo "[+] Executing benchmarks"
 echo "RANDOM SIZE, FIFO FREE, SYNTHETIC"
-echo "  · glibc allocator"
-nice -n -20 ./bin/randomsize_fifo_synthetic || exit
+echo "  · glibc allocator a = 2, b = 20"
+nice -n -20 ./bin/randomsize_fifo_synthetic -a 2 -b 20 || exit
 
-echo "  · slabed allocator"
-nice -n -20 ./bin/randomsize_fifo_synthetic_smalloc || exit
+echo "  · glibc allocator a = 10, b = 10"
+nice -n -20 ./bin/randomsize_fifo_synthetic -a 10 -b 10 || exit
+
+echo "  · glibc allocator a = 20, b = 2"
+nice -n -20 ./bin/randomsize_fifo_synthetic -a 20 -b 2 || exit
+
+echo "  · slab allocator a = 2, b = 20"
+nice -n -20 ./bin/randomsize_fifo_synthetic_smalloc -a 2 -b 20 || exit
+
+echo "  · slab allocator a = 10, b = 10"
+nice -n -20 ./bin/randomsize_fifo_synthetic_smalloc -a 10 -b 10 || exit
+
+echo "  · slab allocator a = 20, b = 2"
+nice -n -20 ./bin/randomsize_fifo_synthetic_smalloc -a 20 -b 2 || exit
+
 
 echo "RANDOM PATTERN SYNTHETIC"
-echo "  · glibc allocator"
+echo "  · glibc allocator d = 20"
 nice -n -20 ./bin/randomalloc_synthetic -d 20 || exit
 
-echo "  · slabed allocator"
+echo "  · glibc allocator d = 200"
+nice -n -20 ./bin/randomalloc_synthetic -d 200 || exit
+
+echo "  · glibc allocator d = 2000"
+nice -n -20 ./bin/randomalloc_synthetic -d 2000 || exit
+
+echo "  · slab allocator d = 20"
 nice -n -20 ./bin/randomalloc_synthetic_smalloc -d 20 || exit
+
+echo "  · slab allocator d = 200"
+nice -n -20 ./bin/randomalloc_synthetic_smalloc -d 200 || exit
+
+echo "  · slab allocator d = 2000"
+nice -n -20 ./bin/randomalloc_synthetic_smalloc -d 2000 || exit
 
 echo
 echo "CFRAC"
