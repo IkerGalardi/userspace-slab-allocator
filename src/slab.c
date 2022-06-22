@@ -349,6 +349,10 @@ void mem_slab_dealloc(struct mem_slab* slab, void* ptr) {
         return;
     }
 
+    if(!freelist_array[prev_index].is_free) {
+        return;
+    }
+
     // Remove the node from the list
     if(next_index == NON_EXISTANT) {
         freelist_array[prev_index].next_index = NON_EXISTANT;
