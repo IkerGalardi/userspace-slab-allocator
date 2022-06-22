@@ -4,6 +4,7 @@
 #include <unistd.h>
 #include <sys/mman.h>
 
+//#define DEBUG_ASSERTS
 #include "internal_assert.h"
 #include "utils.h"
 
@@ -13,16 +14,10 @@
     #define debug(...)
 #endif
 
-#define POOL_START_SIZE  10 
-#define POOL_GROW_RATE   10 
-#define POOL_MAX_GROW_RATE   5 
-
-#define POOL_PAGE_SIZE sysconf(_SC_PAGESIZE)
-
 /*
  * Returns the size of the slab list. Only for debugging purposes.
  */
-MAYBE_UNUSED static int get_list_size(struct mem_slab* list_start) {
+MAYBE_UNUSED static size_t get_list_size(struct mem_slab* list_start) {
     struct mem_slab* current = list_start;
     int jumps = 0;
 
@@ -98,27 +93,23 @@ static void move_slab_to_start_of_the_list(struct slab_pool* pool, struct mem_sl
 }
 
 struct slab_pool slab_pool_create(size_t allocation_size) {
-    struct mem_slab* first_slab = mem_slab_create_several(allocation_size, 0, POOL_START_SIZE, NULL);
+    const size_t pool_start_size = 20;
+    struct mem_slab* first_slab = mem_slab_create_several(allocation_size, 0, pool_start_size, NULL);
+    assert(get_list_size(first_slab) == pool_start_size);
 
     struct slab_pool result;
     result.list_start = first_slab;
     result.list_end = get_last_from_list(first_slab);
     result.allocation_size = allocation_size;
 
-    result.params.minimum_empty_slabs = POOL_GROW_RATE + POOL_MAX_GROW_RATE;
-    result.params.default_grow_rate = POOL_GROW_RATE;
-    result.params.max_grow_rate = POOL_GROW_RATE + POOL_MAX_GROW_RATE;
+    result.params.minimum_empty_slabs = 30;
+    result.params.default_grow_rate = 10;
+    result.params.max_grow_rate = 30;
     
     result.data.allocation_count = 0;
     result.data.deallocation_count = 0;
-    result.data.grow_count = POOL_START_SIZE;
-    result.data.shrink_count = 0;
-
-#ifdef POOL_CONFIG_DEBUG
-    debug("POOL: created pool of size %li\n", result.allocation_size);
-    int size = get_list_size(result.list_start);
-    debug("\t* Size of the list at the start is %i\n", size);
-#endif // POOL_CONFIG_DEBUG
+    result.data.total_count = 40;
+    result.data.full_count = 0;
 
     return result;
 }
@@ -162,7 +153,8 @@ void* slab_pool_allocate(struct slab_pool* pool) {
                                                          pool->list_start);
     pool->list_start = new_first;
     
-    pool->data.grow_count += grow_count;
+    pool->data.total_count += grow_count;
+    assert(pool->data.total_count == get_list_size(pool->list_start));
     
     // Allocate in the newly created slab and return.
     void* result = mem_slab_alloc(pool->list_start);
@@ -181,13 +173,17 @@ void slab_pool_deallocate(struct slab_pool* pool, void* ptr) {
     
     mem_slab_dealloc(slab, ptr);
     
+    
     // If the slab was full before deallocating the pointer we need to move it
     // to the start of the list. This way, we can maintain free slabs first in order
     // to speedup allocations. No need to check if the slab needs to be freed as
     // its imposible it has 0 allocations in it.
-    if(was_slab_full && slab != pool->list_start) {
-        move_slab_to_start_of_the_list(pool, slab);
-        return;
+    if(was_slab_full) { 
+        pool->data.full_count--;
+        if(slab != pool->list_start) {
+            move_slab_to_start_of_the_list(pool, slab);
+            return;
+        }
     }
                                                                                             
     // Ask hour super good heuristic if we need to nuke the slab from the list.
@@ -206,6 +202,8 @@ void slab_pool_deallocate(struct slab_pool* pool, void* ptr) {
         }
         mem_slab_free(slab);
         
-        pool->data.shrink_count++;
+        pool->data.total_count--;
+        
+        assert(pool->data.total_count == get_list_size(pool->list_start));
     }
 }
