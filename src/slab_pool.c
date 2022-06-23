@@ -191,21 +191,24 @@ void slab_pool_deallocate(struct slab_pool* pool, void* ptr) {
     }
                                                                                             
     // Ask hour super good heuristic if we need to nuke the slab from the list.
-    bool heuristic_decision = heuristic_decision_does_unmap(pool->params, pool->data);
     bool is_empty = slab->ref_count == 0;
     bool is_lonely = slab->next == NULL && slab->prev == NULL;
-    if(is_empty && !is_lonely && heuristic_decision) {
-        struct mem_slab* prev = slab->prev;
-        struct mem_slab* next = slab->next;
-        if(prev == NULL) {
-            next->prev = NULL;
-            pool->list_start = next;
-        } else {
-            prev->next = next;
-            next->prev = prev;
-        }
-        mem_slab_free(slab);
+    if(is_empty && !is_lonely) {
+        bool heuristic_decision = heuristic_decision_does_unmap(pool->params, pool->data);
+        if(heuristic_decision) {
+            //printf("DELETING\n");
+            struct mem_slab* prev = slab->prev;
+            struct mem_slab* next = slab->next;
+            if(prev == NULL) {
+                next->prev = NULL;
+                pool->list_start = next;
+            } else {
+                prev->next = next;
+                next->prev = prev;
+            }
+            mem_slab_free(slab);
         
-        pool->data.shrink_count++;
+            pool->data.shrink_count++;
+        }
     }
 }
