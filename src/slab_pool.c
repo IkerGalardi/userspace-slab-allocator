@@ -203,10 +203,8 @@ void slab_pool_deallocate(struct slab_pool* pool, void* ptr) {
                 next->prev = prev;
             }
             mem_slab_free(slab);
-        
-            pool->data.shrink_count++;
+            pool->data.total_count--;
         }
-        pool->data.total_count--;
         
         assert(pool->data.total_count == get_list_size(pool->list_start));
     }
