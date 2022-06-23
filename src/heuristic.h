@@ -16,8 +16,8 @@ struct heuristic_params {
 struct heuristic_data {
     size_t allocation_count;
     size_t deallocation_count;
-    size_t grow_count;
-    size_t shrink_count;
+    size_t total_count;
+    size_t full_count;
 };
 
 int heuristic_decision_grow_count(struct heuristic_params params, struct heuristic_data data);
