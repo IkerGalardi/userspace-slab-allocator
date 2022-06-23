@@ -6,6 +6,7 @@
 #include <errno.h>
 #include <stdbool.h>
 #include <unistd.h>
+#include <time.h>
 
 #include <sys/mman.h>
 
@@ -319,33 +320,22 @@ void mem_slab_dealloc(struct mem_slab* slab, void* ptr) {
     uint16_t slot_index = get_buffer_index_from_ptr(slab, ptr);
     assert((slot_index != NON_EXISTANT));
 
-    debug("SLAB: deallocating slot %i on cache %p\n", slot_index, slab);
-    debug("\t * Freelist start is %d\n", slab->freelist_start_index);
-    debug("\t * Freelist end is %d\n", slab->freelist_end_index);
-
-#ifdef SLAB_CONFIG_DEBUG_FREELIST
-    print_freelist(slab);
-#endif // SLAB_CONFIG_DEBUG_FREELIST
-
-#ifdef SLAB_CONFIG_DEBUG_PARANOID_ASSERTS
-    debug("\t * Getting size at the start...");
-    int start_size = get_freelist_size(slab);
-    debug(" %d slots\n", start_size);
-#endif // SLAB_CONFIG_DEBUG_PARANOID_ASSERTS
-
-
     // Check for double free
     assert((freelist_array[slot_index].is_free == SLOT_BUSY) && "Passed pointer has never been allocated or already free");
     
     // Decrement the reference count and mark node as free
     slab->ref_count--;
     freelist_array[slot_index].is_free = SLOT_FREE; 
-
+    
     uint16_t next_index = freelist_array[slot_index].next_index;
     uint16_t prev_index = freelist_array[slot_index].prev_index;
 
     // The node is already the first in the list so no movement should be done.
     if(slot_index == slab->freelist_start_index) {
+        return;
+    }
+
+    if(!freelist_array[prev_index].is_free) {
         return;
     }
 
@@ -367,21 +357,7 @@ void mem_slab_dealloc(struct mem_slab* slab, void* ptr) {
     freelist_array[slot_index].prev_index = NON_EXISTANT;
     freelist_array[slab->freelist_start_index].prev_index = slot_index;
     slab->freelist_start_index = slot_index;
-
+    
     assert((slab->freelist_start_index != NON_EXISTANT));
     assert((slab->freelist_end_index != NON_EXISTANT));
-
-    debug("\t * New first in the freelist %i\n", slab->freelist_start_index);
-    debug("\t * New last in the freelist %i\n", slab->freelist_end_index);
-
-#ifdef SLAB_CONFIG_DEBUG_FREELIST
-    print_freelist(slab);
-#endif // SLAB_CONFIG_DEBUG_FREELIST
-
-#ifdef SLAB_CONFIG_DEBUG_PARANOID_ASSERTS
-    debug("\t * Getting size at the start...");
-    int after_size = get_freelist_size(slab);
-    debug(" %d slots\n", after_size);
-    assert((start_size == after_size) && "Freelist size changed :(");
-#endif // SLAB_CONFIG_DEBUG_PARANOID_ASSERTS
 }
