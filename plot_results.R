@@ -19,14 +19,14 @@ a20b2 = data.frame(
 p1 = ggplot(a2b20, aes(x=name, y=value)) + 
         geom_bar(stat = "identity") +
         ggtitle("α = 2, β = 20") +
-        xlab("Operation") + 
+        xlab("") + 
         ylab("Time (ns)") +
         theme(text = element_text(size = 8))
 
 p2 = ggplot(a10b10, aes(x=name, y=value)) + 
         geom_bar(stat = "identity") +
         ggtitle("α = 10, β = 10") +
-        xlab("Operation") + 
+        xlab("") + 
         ylab("Time (ns)") + 
         theme(text = element_text(size = 8))
 
@@ -34,12 +34,12 @@ p2 = ggplot(a10b10, aes(x=name, y=value)) +
 p3 = ggplot(a20b2, aes(x=name, y=value)) + 
         geom_bar(stat = "identity") +
         ggtitle("α = 20, β = 2") +
-        xlab("Operation") +
+        xlab("") +
         ylab("Time (ns)") +
         theme(text = element_text(size = 8))
 
 
 p4 = plot_grid(p1, p2, p3, labels=c("", "", ""), ncol=2, nrow=2)
 sizedistrfile = "sizedistr.pdf"
-save_plot(sizedistrfile, p4, ncol=2, nrow=2, base_asp=1.1)
+save_plot(sizedistrfile, p4, ncol=2, nrow=2, base_asp=1.1, device=cairo_pdf)
 
