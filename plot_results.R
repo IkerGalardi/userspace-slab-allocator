@@ -40,7 +40,7 @@ p3 = ggplot(a20b2, aes(x=name, y=value)) +
 
 
 p4 = plot_grid(p1, p2, p3, labels=c("", "", ""), ncol=2, nrow=2)
-sizedistrfile = "sizedistr.pdf"
+sizedistrfile = "sizedistr.eps"
 save_plot(sizedistrfile, p4, ncol=2, nrow=2, base_asp=1.1, device=cairo_pdf)
 
 
@@ -82,7 +82,7 @@ p7 = ggplot(d2000, aes(x=name, y=value)) +
         theme_classic()
 
 p8 = plot_grid(p5, p6, p7, labels=c("", "", ""), ncol=2, nrow=2)
-randompatternfname = "randomapttern.pdf"
+randompatternfname = "randomapttern.eps"
 save_plot(randompatternfname, p8, ncol=2, nrow=2, base_asp=1.1, device=cairo_pdf)
 
 cfrac = data.frame(
@@ -96,5 +96,5 @@ p9 = ggplot(cfrac, aes(x=name, y=value)) +
         xlab("") +
         ylab("Time (s)") +
         theme_classic()
-cfracfname = "cfrac.pdf"
+cfracfname = "cfrac.eps"
 save_plot(cfracfname, p9, ncol=2, nrow=2, base_asp=1.1, device=cairo_pdf)
