@@ -84,3 +84,17 @@ p7 = ggplot(d2000, aes(x=name, y=value)) +
 p8 = plot_grid(p5, p6, p7, labels=c("", "", ""), ncol=2, nrow=2)
 randompatternfname = "randomapttern.pdf"
 save_plot(randompatternfname, p8, ncol=2, nrow=2, base_asp=1.1, device=cairo_pdf)
+
+cfrac = data.frame(
+  name=c("glibc alloctor", "slab allocator"),
+  value=c(1.098, 1.097)
+)
+
+p9 = ggplot(cfrac, aes(x=name, y=value)) + 
+        geom_bar(stat = "identity") +
+        ggtitle("CFrac") +
+        xlab("") +
+        ylab("Time (s)") +
+        theme_classic()
+cfracfname = "cfrac.pdf"
+save_plot(cfracfname, p9, ncol=2, nrow=2, base_asp=1.1, device=cairo_pdf)
