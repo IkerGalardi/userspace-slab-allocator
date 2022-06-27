@@ -51,25 +51,6 @@ static inline uint16_t get_buffer_index_from_ptr(struct mem_slab* slab, void* pt
     return ((uintptr_t)ptr - (uintptr_t)slab->allocable_buffer) / (slab->size);
 }
 
-/* 
- * Returns true if the pointer specified is in the page specified. False otherwise.
- */
-
-
-/*
- * Prints the freelist to stdout. Should only be used when debugging is enabled
- * as traversing the list slows down things.
- */
-MAYBE_UNUSED static void print_freelist(struct mem_slab* slab) {
-    struct slab_bufctl* bufctl_array = (struct slab_bufctl*)(slab->freelist_buffer);
-
-    int current_index = slab->freelist_start_index;
-    while(bufctl_array[current_index].next_index != NON_EXISTANT) {
-        struct slab_bufctl current_node = bufctl_array[current_index];
-        current_index = current_node.next_index;
-    }
-}
-
 /*
  * Returns the size of the slab list. Should only be used when debugging is enabled
  * as traversing the slows down things.
@@ -127,8 +108,8 @@ static void prepare_slab_header(struct mem_slab* result, int size, int alignment
 }
 
 struct mem_slab* mem_slab_create(int size, int alignment) {
-    assert((size > 0) && "Slab size must be bigger than 0");
-    assert((alignment >= 0) && "Alignment must be bigger than 0");
+    assert(size > 0);
+    assert(alignment >= 0);
 
     struct mem_slab* result = (struct mem_slab*)mmap(NULL,
                                                      SLAB_PAGE_SIZE,
@@ -191,17 +172,17 @@ struct mem_slab* mem_slab_create_several(int size, int alignment, int count, str
 }
 
 void mem_slab_free(struct mem_slab* slab) {
-    assert((slab != NULL));
-    assert((slab->slab_magic == SLAB_MAGIC_NUMBER));
-    assert((slab->ref_count == 0) && "Can't free the slab if objects are allocated");
+    assert(slab != NULL);
+    assert(slab->slab_magic == SLAB_MAGIC_NUMBER);
+    assert(slab->ref_count == 0);
 
     munmap((void*)slab, SLAB_PAGE_SIZE);
 }
 
 void* mem_slab_alloc(struct mem_slab* slab) {
     // Basic sanity checks
-    assert((slab != NULL) && "Slab should be a valid pointer");
-    assert((slab->slab_magic == SLAB_MAGIC_NUMBER));
+    assert(slab != NULL);
+    assert(slab->slab_magic == SLAB_MAGIC_NUMBER);
 
 #ifdef SLAB_CONFIG_DEBUG_PARANOID_ASSERTS
     int start_size = get_freelist_size(slab);
@@ -242,8 +223,8 @@ void* mem_slab_alloc(struct mem_slab* slab) {
     // Important to mark it as busy.
     freelist_array[free_index].is_free = SLOT_BUSY;
 
-    assert((slab->freelist_start_index != NON_EXISTANT));
-    assert((slab->freelist_end_index != NON_EXISTANT));
+    assert(slab->freelist_start_index != NON_EXISTANT);
+    assert(slab->freelist_end_index != NON_EXISTANT);
 
 #ifdef SLAB_CONFIG_DEBUG_PARANOID_ASSERTS
     int after_size = get_freelist_size(slab);
@@ -251,7 +232,7 @@ void* mem_slab_alloc(struct mem_slab* slab) {
 #endif // SLAB_CONFIG_DEBUG_PARANOID_ASSERTS
 
     void* to_return = (void*)((uintptr_t)slab->allocable_buffer + slab->size * free_index);
-    assert((is_ptr_in_page(slab, to_return)) && "Allocation pointer not inside the page cache");
+    assert(is_ptr_in_page(slab, to_return));
 
     return to_return;
 }
@@ -259,16 +240,16 @@ void* mem_slab_alloc(struct mem_slab* slab) {
 // TODO: fill with non allocated pattern 
 void mem_slab_dealloc(struct mem_slab* slab, void* ptr) {
     // Basic sanity checks before beginning any work
-    assert((slab != NULL) && "Slab should be a valid ptr");
-    assert((slab->slab_magic == SLAB_MAGIC_NUMBER) && "Slab should be a valid ptr");
-    assert((is_ptr_in_page(slab, ptr)) && "Pointer was not allocated by this cache");
+    assert(slab != NULL);
+    assert(slab->slab_magic == SLAB_MAGIC_NUMBER);
+    assert(is_ptr_in_page(slab, ptr));
 
     struct slab_bufctl* freelist_array = (struct slab_bufctl*)(slab->freelist_buffer);
     uint16_t slot_index = get_buffer_index_from_ptr(slab, ptr);
-    assert((slot_index != NON_EXISTANT));
+    assert(slot_index != NON_EXISTANT);
 
     // Check for double free
-    assert((freelist_array[slot_index].is_free == SLOT_BUSY) && "Passed pointer has never been allocated or already free");
+    assert(freelist_array[slot_index].is_free == SLOT_BUSY);
     
     // Decrement the reference count and mark node as free
     slab->ref_count--;
@@ -305,6 +286,6 @@ void mem_slab_dealloc(struct mem_slab* slab, void* ptr) {
     freelist_array[slab->freelist_start_index].prev_index = slot_index;
     slab->freelist_start_index = slot_index;
     
-    assert((slab->freelist_start_index != NON_EXISTANT));
-    assert((slab->freelist_end_index != NON_EXISTANT));
+    assert(slab->freelist_start_index != NON_EXISTANT);
+    assert(slab->freelist_end_index != NON_EXISTANT);
 }
