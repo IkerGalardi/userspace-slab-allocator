@@ -8,12 +8,6 @@
 #include "internal_assert.h"
 #include "utils.h"
 
-#ifdef POOL_CONFIG_DEBUG
-    #define debug(...) fprintf(stderr, __VA_ARGS__); fflush(stderr)
-#else
-    #define debug(...)
-#endif
-
 #define POOL_START_SIZE  10 
 #define POOL_GROW_RATE   10 
 #define POOL_MAX_GROW_RATE   5 
@@ -114,12 +108,6 @@ struct slab_pool slab_pool_create(size_t allocation_size) {
     result.data.deallocation_count = 0;
     result.data.grow_count = POOL_START_SIZE;
     result.data.shrink_count = 0;
-
-#ifdef POOL_CONFIG_DEBUG
-    debug("POOL: created pool of size %li\n", result.allocation_size);
-    int size = get_list_size(result.list_start);
-    debug("\t* Size of the list at the start is %i\n", size);
-#endif // POOL_CONFIG_DEBUG
 
     return result;
 }
