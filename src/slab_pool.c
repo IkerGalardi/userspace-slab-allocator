@@ -192,7 +192,7 @@ void slab_pool_deallocate(struct slab_pool* pool, void* ptr) {
     }
                                                                                             
     // Ask hour super good heuristic if we need to nuke the slab from the list.
-    bool heuristic_decision = heuristic_decision_does_unmap(pool->params, pool->data);
+    bool heuristic_decision = heuristic_decision_does_free_slab(pool->params, pool->data);
     bool is_empty = slab->ref_count == 0;
     bool is_lonely = slab->next == NULL && slab->prev == NULL;
     if(is_empty && !is_lonely && heuristic_decision) {

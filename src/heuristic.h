@@ -28,6 +28,6 @@ int heuristic_decision_grow_count(struct heuristic_params params, struct heurist
 /*
  * Returns whether a slab should be removed or not based on the given parameters and pool statistics
  */
-bool heuristic_decision_does_unmap(struct heuristic_params params, struct heuristic_data data);
+bool heuristic_decision_does_free_slab(struct heuristic_params params, struct heuristic_data data);
 
 #endif // SLAB_HEURISTIC_H
