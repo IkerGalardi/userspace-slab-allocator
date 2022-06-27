@@ -10,12 +10,6 @@
 #include "utils.h"
 #include "internal_assert.h"
 
-#ifdef SMALLOC_CONFIG_DEBUG
-    #define debug(...) fprintf(stderr, __VA_ARGS__); fflush(stderr)
-#else
-    #define debug(...)
-#endif
-
 #define SMALLOC_CACHE_COUNT 6
 struct slab_pool pools[SMALLOC_CACHE_COUNT];
 
@@ -24,15 +18,13 @@ __attribute__((constructor)) void smalloc_initialize() {
     size_t cache_sizes[SMALLOC_CACHE_COUNT] = { 8, 16, 32, 64, 128, 256 };
 
     // Initialize the caches using the configuration
-    debug("SMALLOC: creating %i caches at initialization\n", SMALLOC_CACHE_COUNT);
     for(int i = 0; i < SMALLOC_CACHE_COUNT; i++) {
         pools[i] = slab_pool_create(cache_sizes[i]);
     }
 }
 
 void* smalloc(size_t size) {
-    assert((size != 0) && "Allocation size must be bigger than 0"); 
-    debug("SMALLOC: Allocation of size %lu\n", size);
+    assert(size != 0); 
 
     // Find a suitable cache and try to allocate on it.
     // NOTE: Assumes that the cache configuration sizes are sorted.
@@ -78,8 +70,6 @@ void* srealloc(void* ptr, size_t size) {
 }
 
 void sfree(void* ptr) {
-    assert((ptr != NULL) && "Passed pointer should be a valid pointer");
-
     // Fast path. If the pointer was not allocated in a slab we simply free and return.
     struct mem_slab* slab = get_page_pointer(ptr);
     if(slab->slab_magic != SLAB_MAGIC_NUMBER) {
