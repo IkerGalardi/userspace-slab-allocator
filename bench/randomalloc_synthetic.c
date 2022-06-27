@@ -47,13 +47,15 @@ struct benchmark_parameters {
 
     // Pattern parameters
     size_t average_spacing;
+    size_t deviation;
 };
 
 struct benchmark_parameters get_params(int argc, char** argv) {
     struct benchmark_parameters result = {
         .alpha = 2,
         .beta = 20,
-        .average_spacing = 4
+        .average_spacing = 1000,
+        .deviation = 100
     };
 
     int option = 0;
@@ -76,18 +78,21 @@ struct benchmark_parameters get_params(int argc, char** argv) {
     return result;
 }
 
-struct operation* construct_operation_array(size_t count, size_t average_spacing) {
+struct operation* construct_operation_array(size_t count, size_t average_spacing, size_t deviation) {
     struct operation* operations = (struct operation*)calloc(count, sizeof(struct operation));
+
 
     struct operation malloc_operation;
     struct operation free_operation;
     for(int i = 0; i < count; i++) {
+        int64_t applied_deviation = rand() % deviation - (deviation / 2);
+
         if(operations[i].operation_type != OP_UNKNOWN)
             continue;
 
         // Create the malloc operation and matching free operation
         malloc_operation.operation_type = OP_MALLOC;
-        malloc_operation.free_index = i + average_spacing;
+        malloc_operation.free_index = i + average_spacing + applied_deviation;
         malloc_operation.operand = NULL;
 
         free_operation.operation_type = OP_FREE;
@@ -116,7 +121,7 @@ void print_operation_list(struct operation* ops, size_t count) {
 }
 
 int main(int argc, char** argv) {
-    struct benchmark_parameters params = get_params (argc, argv);
+    struct benchmark_parameters params = get_params(argc, argv);
 
     struct timespec start;
     struct timespec end;
@@ -124,7 +129,7 @@ int main(int argc, char** argv) {
     size_t deallocation_time = 0;
 
     size_t operation_count = 100000000;
-    struct operation* ops = construct_operation_array(operation_count, params.average_spacing);
+    struct operation* ops = construct_operation_array(operation_count, params.average_spacing, params.deviation);
 
     gsl_rng* r = gsl_rng_alloc(gsl_rng_default);
     gsl_rng_set(r, 0);
@@ -146,13 +151,15 @@ int main(int argc, char** argv) {
             clock_gettime(CLOCK_MONOTONIC, &end);
             
             allocation_time += timespec_diff_ns(&start, &end);
-
+            printf("MALLOC\n");
         } else if(op.operation_type == OP_FREE) {
             clock_gettime(CLOCK_MONOTONIC, &start);
             deallocate(op.operand);
             clock_gettime(CLOCK_MONOTONIC, &end);
 
             deallocation_time += timespec_diff_ns(&start, &end);
+
+            printf("FREE\n");
         }
     }
 
