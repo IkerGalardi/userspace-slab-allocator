@@ -8,12 +8,6 @@
 #include "internal_assert.h"
 #include "utils.h"
 
-#ifdef POOL_CONFIG_DEBUG
-    #define debug(...) fprintf(stderr, __VA_ARGS__); fflush(stderr)
-#else
-    #define debug(...)
-#endif
-
 #define POOL_START_SIZE  10 
 #define POOL_GROW_RATE   10 
 #define POOL_MAX_GROW_RATE   5 
@@ -115,12 +109,6 @@ struct slab_pool slab_pool_create(size_t allocation_size) {
     result.data.grow_count = POOL_START_SIZE;
     result.data.shrink_count = 0;
 
-#ifdef POOL_CONFIG_DEBUG
-    debug("POOL: created pool of size %li\n", result.allocation_size);
-    int size = get_list_size(result.list_start);
-    debug("\t* Size of the list at the start is %i\n", size);
-#endif // POOL_CONFIG_DEBUG
-
     return result;
 }
 
@@ -192,7 +180,7 @@ void slab_pool_deallocate(struct slab_pool* pool, void* ptr) {
     }
                                                                                             
     // Ask hour super good heuristic if we need to nuke the slab from the list.
-    bool heuristic_decision = heuristic_decision_does_unmap(pool->params, pool->data);
+    bool heuristic_decision = heuristic_decision_does_free_slab(pool->params, pool->data);
     bool is_empty = slab->ref_count == 0;
     bool is_lonely = slab->next == NULL && slab->prev == NULL;
     if(is_empty && !is_lonely && heuristic_decision) {
