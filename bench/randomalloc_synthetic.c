@@ -122,7 +122,7 @@ void print_operation_list(struct operation* ops, size_t count) {
     for(int i = 0; i < count; i++) {
         if(ops[i].operation_type == OP_MALLOC) {
             printf("Malloc, pair free on index %lu\n", ops[i].free_index);
-        } else if(ops[i].operation_type == OP_MALLOC) {
+        } else if(ops[i].operation_type == OP_FREE) {
             printf("Free\n");
         } else {
             printf("Unknown operation\n");
