@@ -103,17 +103,13 @@ struct operation* construct_operation_array(size_t count, size_t average_spacing
         free_operation.free_index = 0;
         free_operation.operand = NULL;
 
-        if(operations[i].operation_type != OP_UNKNOWN) {
-            continue;
-        }
-
         operations[i] = malloc_operation;
 
         if((free_operation_index > 0)
             && (free_operation_index < count)
             && (operations[free_operation_index].operation_type == OP_UNKNOWN))
         {
-            operations[i] = free_operation;
+            operations[free_operation_index] = free_operation;
         }
     }
 
@@ -123,9 +119,9 @@ struct operation* construct_operation_array(size_t count, size_t average_spacing
 void print_operation_list(struct operation* ops, size_t count) {
     for(int i = 0; i < count; i++) {
         if(ops[i].operation_type == OP_MALLOC) {
-            printf("Malloc, pair free on index %lu\n", ops[i].free_index);
+            printf("[%d] Malloc, pair free on index %lu\n", i, ops[i].free_index);
         } else if(ops[i].operation_type == OP_FREE) {
-            printf("Free\n");
+            printf("[%d] Free\n", i);
         } else {
             printf("Unknown operation\n");
         }
