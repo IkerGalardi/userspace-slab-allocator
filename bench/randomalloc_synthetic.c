@@ -103,9 +103,11 @@ struct operation* construct_operation_array(size_t count, size_t average_spacing
         free_operation.free_index = 0;
         free_operation.operand = NULL;
 
-        if(operations[i].operation_type == OP_UNKNOWN) {
-            operations[i] = malloc_operation;
+        if(operations[i].operation_type != OP_UNKNOWN) {
+            continue;
         }
+
+        operations[i] = malloc_operation;
 
         if((free_operation_index > 0)
             && (free_operation_index < count)
