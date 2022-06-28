@@ -47,17 +47,19 @@ struct benchmark_parameters {
 
     // Pattern parameters
     size_t average_spacing;
+    size_t deviation;
 };
 
 struct benchmark_parameters get_params(int argc, char** argv) {
     struct benchmark_parameters result = {
         .alpha = 2,
         .beta = 20,
-        .average_spacing = 4
+        .average_spacing = 4,
+        .deviation = 40
     };
 
     int option = 0;
-    while((option = getopt(argc, argv, "a:b:d:")) != -1) {
+    while((option = getopt(argc, argv, "a:b:d:D:")) != -1) {
         switch(option) {
         case 'a':
             result.alpha = atoi(optarg);
@@ -70,13 +72,17 @@ struct benchmark_parameters get_params(int argc, char** argv) {
         case 'd':
             result.average_spacing = atoi(optarg);
             break;
+
+        case 'D':
+            result.deviation = atoi(optarg);
+            break;
         }
     }
 
     return result;
 }
 
-struct operation* construct_operation_array(size_t count, size_t average_spacing) {
+struct operation* construct_operation_array(size_t count, size_t average_spacing, size_t deviation) {
     struct operation* operations = (struct operation*)calloc(count, sizeof(struct operation));
 
     struct operation malloc_operation;
@@ -85,20 +91,27 @@ struct operation* construct_operation_array(size_t count, size_t average_spacing
         if(operations[i].operation_type != OP_UNKNOWN)
             continue;
 
+        size_t how_much_deviate = (rand() % deviation) - (deviation / 2);
+        size_t free_operation_index = i + average_spacing + how_much_deviate;
+
         // Create the malloc operation and matching free operation
         malloc_operation.operation_type = OP_MALLOC;
-        malloc_operation.free_index = i + average_spacing;
         malloc_operation.operand = NULL;
+        malloc_operation.free_index = free_operation_index;
 
         free_operation.operation_type = OP_FREE;
         free_operation.free_index = 0;
         free_operation.operand = NULL;
 
-        // Add the operations to the array
-        memcpy(operations + i, &malloc_operation, sizeof(struct operation));
+        if(operations[i].operation_type == OP_UNKNOWN) {
+            operations[i] = malloc_operation;
+        }
 
-        if(i + average_spacing < count) {
-            memcpy(operations + i + average_spacing, &free_operation, sizeof(struct operation));
+        if((free_operation_index > 0)
+            && (free_operation_index < count)
+            && (operations[free_operation_index].operation_type == OP_UNKNOWN))
+        {
+            operations[i] = free_operation;
         }
     }
 
@@ -108,9 +121,11 @@ struct operation* construct_operation_array(size_t count, size_t average_spacing
 void print_operation_list(struct operation* ops, size_t count) {
     for(int i = 0; i < count; i++) {
         if(ops[i].operation_type == OP_MALLOC) {
-            
+            printf("Malloc, pair free on index %lu\n", ops[i].free_index);
         } else if(ops[i].operation_type == OP_MALLOC) {
-
+            printf("Free\n");
+        } else {
+            printf("Unknown operation\n");
         }
     }
 }
@@ -124,7 +139,8 @@ int main(int argc, char** argv) {
     size_t deallocation_time = 0;
 
     size_t operation_count = 100000000;
-    struct operation* ops = construct_operation_array(operation_count, params.average_spacing);
+    struct operation* ops = construct_operation_array(operation_count, params.average_spacing, params.deviation);
+    print_operation_list(ops, operation_count);
 
     gsl_rng* r = gsl_rng_alloc(gsl_rng_default);
     gsl_rng_set(r, 0);
