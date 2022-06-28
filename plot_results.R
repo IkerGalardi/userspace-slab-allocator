@@ -17,30 +17,33 @@ a20b2 = data.frame(
 )
 
 p1 = ggplot(a2b20, aes(x=name, y=value)) + 
-        geom_bar(stat = "identity") +
-        ggtitle("α = 2, β = 20") +
-        xlab("") + 
-        ylab("Time (ns)") +
-        theme_classic()
+  geom_bar(stat = "identity", colour="#87a4cd", fill="#dae8fc") +
+  ggtitle("α = 2, β = 20") +
+  xlab("") + 
+  ylab("Time (ns)") +
+  theme_classic() + 
+  theme(plot.title = element_text(hjust = 0.5))
 
 p2 = ggplot(a10b10, aes(x=name, y=value)) + 
-        geom_bar(stat = "identity") +
-        ggtitle("α = 10, β = 10") +
-        xlab("") + 
-        ylab("Time (ns)") + 
-        theme_classic()
+  geom_bar(stat = "identity", colour="#87a4cd", fill="#dae8fc") +
+  ggtitle("α = 10, β = 10") +
+  xlab("") + 
+  ylab("Time (ns)") + 
+  theme_classic() + 
+  theme(plot.title = element_text(hjust = 0.5))
 
 
 p3 = ggplot(a20b2, aes(x=name, y=value)) + 
-        geom_bar(stat = "identity") +
-        ggtitle("α = 20, β = 2") +
-        xlab("") +
-        ylab("Time (ns)") +
-        theme_classic()
+  geom_bar(stat = "identity", colour="#87a4cd", fill="#dae8fc") +
+  ggtitle("α = 20, β = 2") +
+  xlab("") +
+  ylab("Time (ns)") +
+  theme_classic() +
+  theme(plot.title = element_text(hjust = 0.5))
 
 
 p4 = plot_grid(p1, p2, p3, labels=c("", "", ""), ncol=2, nrow=2)
-sizedistrfile = "sizedistr.eps"
+sizedistrfile = "sizedistr.pdf"
 save_plot(sizedistrfile, p4, ncol=2, nrow=2, base_asp=1.1, device=cairo_pdf)
 
 
@@ -60,29 +63,32 @@ d2000 = data.frame(
 )
 
 p5 = ggplot(d20, aes(x=name, y=value)) + 
-        geom_bar(stat = "identity") +
-        ggtitle("d = 20") +
-        xlab("") + 
-        ylab("Time (ns)") +
-        theme_classic()
+  geom_bar(stat = "identity", colour="#87a4cd", fill="#dae8fc") +
+  ggtitle("d = 20") +
+  xlab("") + 
+  ylab("Time (ns)") +
+  theme_classic() + 
+  theme(plot.title = element_text(hjust = 0.5))
 
 p6 = ggplot(d200, aes(x=name, y=value)) + 
-        geom_bar(stat = "identity") +
-        ggtitle("d = 200") +
-        xlab("") + 
-        ylab("Time (ns)") + 
-        theme_classic()
+  geom_bar(stat = "identity", colour="#87a4cd", fill="#dae8fc") +
+  ggtitle("d = 200") +
+  xlab("") + 
+  ylab("Time (ns)") + 
+  theme_classic() + 
+  theme(plot.title = element_text(hjust = 0.5))
 
 
 p7 = ggplot(d2000, aes(x=name, y=value)) + 
-        geom_bar(stat = "identity") +
-        ggtitle("d = 2000") +
-        xlab("") +
-        ylab("Time (ns)") +
-        theme_classic()
+  geom_bar(stat = "identity", colour="#87a4cd", fill="#dae8fc") +
+  ggtitle("d = 2000") +
+  xlab("") +
+  ylab("Time (ns)") +
+  theme_classic() + 
+  theme(plot.title = element_text(hjust = 0.5))
 
 p8 = plot_grid(p5, p6, p7, labels=c("", "", ""), ncol=2, nrow=2)
-randompatternfname = "randomapttern.eps"
+randompatternfname = "randomapttern.pdf"
 save_plot(randompatternfname, p8, ncol=2, nrow=2, base_asp=1.1, device=cairo_pdf)
 
 cfrac = data.frame(
@@ -91,10 +97,11 @@ cfrac = data.frame(
 )
 
 p9 = ggplot(cfrac, aes(x=name, y=value)) + 
-        geom_bar(stat = "identity") +
-        ggtitle("CFrac") +
-        xlab("") +
-        ylab("Time (s)") +
-        theme_classic()
-cfracfname = "cfrac.eps"
+  geom_bar(stat = "identity", colour="#87a4cd", fill="#dae8fc") +
+  ggtitle("CFrac") +
+  xlab("") +
+  ylab("Time (s)") +
+  theme_classic() + 
+  theme(plot.title = element_text(hjust = 0.5))
+cfracfname = "cfrac.pdf"
 save_plot(cfracfname, p9, ncol=2, nrow=2, base_asp=1.1, device=cairo_pdf)
