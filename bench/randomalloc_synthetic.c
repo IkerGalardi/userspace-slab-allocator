@@ -91,26 +91,28 @@ struct operation* construct_operation_array(size_t count, size_t average_spacing
         if(operations[i].operation_type != OP_UNKNOWN)
             continue;
 
-        size_t how_much_deviate = (rand() % deviation) - (deviation / 2);
-        size_t free_operation_index = i + average_spacing + how_much_deviate;
+        // Construct the base malloc operation
+        struct operation malloc_operation = {
+            .operation_type = OP_MALLOC,
+            .operand = NULL,
+            .free_index = 0
+        };
 
-        // Create the malloc operation and matching free operation
-        malloc_operation.operation_type = OP_MALLOC;
-        malloc_operation.operand = NULL;
-        malloc_operation.free_index = free_operation_index;
+        // Set the free operation index. If the operation at that index is already ocuppied just do nothing
+        // and that pointer will be leaked. It's a feature, not a bug.
+        size_t free_distance = average_spacing + (rand() % deviation);
+        if((i + free_distance < count) && operations[i + free_distance].operation_type == OP_UNKNOWN) {
+            malloc_operation.free_index = i + free_distance;
 
-        free_operation.operation_type = OP_FREE;
-        free_operation.free_index = 0;
-        free_operation.operand = NULL;
+            struct operation free_operation = {
+                .operation_type = OP_FREE,
+                .operand = NULL,
+                .free_index = 0
+            };
+            operations[i + free_distance] = free_operation;
+        }
 
         operations[i] = malloc_operation;
-
-        if((free_operation_index > 0)
-            && (free_operation_index < count)
-            && (operations[free_operation_index].operation_type == OP_UNKNOWN))
-        {
-            operations[free_operation_index] = free_operation;
-        }
     }
 
     return operations;
@@ -138,7 +140,7 @@ int main(int argc, char** argv) {
 
     size_t operation_count = 100000000;
     struct operation* ops = construct_operation_array(operation_count, params.average_spacing, params.deviation);
-    print_operation_list(ops, operation_count);
+    //print_operation_list(ops, operation_count);
 
     gsl_rng* r = gsl_rng_alloc(gsl_rng_default);
     gsl_rng_set(r, 0);
@@ -146,21 +148,18 @@ int main(int argc, char** argv) {
     for(int i = 0; i < operation_count; i++) {
         struct operation op = ops[i];
         if(op.operation_type == OP_MALLOC) {
-            // If the free is out of bounds, simply ignore.
-            if(op.free_index >= operation_count)
-                continue;
-
             size_t allocation_size = roundf(MAX_ALLOCATION_SIZE *
                                          gsl_ran_beta(r, params.alpha, params.beta));
 
-            struct operation* matching_free_op = ops + op.free_index;
-
             clock_gettime(CLOCK_MONOTONIC, &start);
-            matching_free_op->operand = allocate(10);
+            void* result = allocate(10);
             clock_gettime(CLOCK_MONOTONIC, &end);
-            
             allocation_time += timespec_diff_ns(&start, &end);
 
+            if(op.free_index != 0) {
+                struct operation* free_op = ops + op.free_index;
+                free_op->operand = result;
+            }
         } else if(op.operation_type == OP_FREE) {
             clock_gettime(CLOCK_MONOTONIC, &start);
             deallocate(op.operand);
