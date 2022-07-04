@@ -37,6 +37,55 @@ struct slab_bufctl {
     uint8_t is_free;
 } __attribute__((packed));
 
+static void move_slot_to_end(struct mem_slab* slab, int free_index) {
+    struct slab_bufctl* freelist_array = (struct slab_bufctl*)(slab->freelist_buffer);
+    int free_next = freelist_array[free_index].next_index;
+    int free_prev = freelist_array[free_index].prev_index;
+
+    // Remove the node from the list. If it's the first one, then update the freelist_start_index
+    // so that the freelist doesn't get destroyed.
+    if(freelist_array[free_index].prev_index == NON_EXISTANT) {
+        freelist_array[free_next].prev_index = NON_EXISTANT;
+        slab->freelist_start_index = free_next;
+    } else {
+        freelist_array[free_prev].next_index = free_next;
+        freelist_array[free_next].prev_index = free_prev;
+    }
+
+    // Append the node in the end of the list.
+    freelist_array[slab->freelist_end_index].next_index = free_index;
+    freelist_array[free_index].prev_index = slab->freelist_end_index;
+    slab->freelist_end_index = free_index;
+    freelist_array[free_index].next_index = NON_EXISTANT;
+
+}
+
+static void move_slot_to_start(struct mem_slab* slab, int slot_index) {
+    struct slab_bufctl* freelist_array = (struct slab_bufctl*)(slab->freelist_buffer);
+    uint16_t next_index = freelist_array[slot_index].next_index;
+    uint16_t prev_index = freelist_array[slot_index].prev_index;
+
+    // Remove the node from the list
+    if(next_index == NON_EXISTANT) {
+        freelist_array[prev_index].next_index = NON_EXISTANT;
+    } else {
+        freelist_array[prev_index].next_index = next_index;
+        freelist_array[next_index].prev_index = prev_index;
+    }
+
+    // If the slot is at the end we need to move the end index to the before one.
+    if(slab->freelist_end_index == slot_index) {
+        slab->freelist_end_index = prev_index;
+    }
+
+    // Append the node to the start of the list and update the index to the first node
+    freelist_array[slot_index].next_index = slab->freelist_start_index;
+    freelist_array[slot_index].prev_index = NON_EXISTANT;
+    freelist_array[slab->freelist_start_index].prev_index = slot_index;
+    slab->freelist_start_index = slot_index;
+
+}
+
 /*
  * Returns the index of the buffer in the slab->allocable_buffer.
  */
@@ -105,9 +154,40 @@ void unitest_slab_h() {
         }
     }
 
-    // Move slot to end
+    // Move first slot to end
     {
+        struct mem_slab* slab = mem_slab_create(7, 0);
+        int list_size_start = get_freelist_size(slab);
 
+        if(list_size_start == slab->max_refs) {
+            printf("\t· mem_slab_create initial list size: PASSED\n");
+        } else {
+            printf("\t· mem_slab_create initial list size: FAILED\n");
+        }
+
+        move_slot_to_end(slab, slab->freelist_start_index);
+        int list_size_after = get_freelist_size(slab);
+
+        if(list_size_start == list_size_after) {
+            printf("\t· mem_slab_create move first to end: PASSED\n");
+        } else {
+            printf("\t· mem_slab_create move first to end: FAILED\n");
+        }
+    }
+
+    // Move last slot to end
+    {
+        struct mem_slab* slab = mem_slab_create(7, 0);
+        int list_size_start = get_freelist_size(slab);
+
+        move_slot_to_end(slab, slab->freelist_end_index);
+        int list_size_after = get_freelist_size(slab);
+    
+        if(list_size_start == list_size_after) {
+            printf("\t· mem_slab_create move last to end: PASSED\n");
+        } else {
+            printf("\t· mem_slab_create move last to end: FAILED\n");
+        }
     }
 }
 
@@ -222,29 +302,6 @@ void mem_slab_free(struct mem_slab* slab) {
     munmap((void*)slab, SLAB_PAGE_SIZE);
 }
 
-static void move_slot_to_end(struct mem_slab* slab, int free_index) {
-    struct slab_bufctl* freelist_array = (struct slab_bufctl*)(slab->freelist_buffer);
-    int free_next = freelist_array[free_index].next_index;
-    int free_prev = freelist_array[free_index].prev_index;
-
-    // Remove the node from the list. If it's the first one, then update the freelist_start_index
-    // so that the freelist doesn't get destroyed.
-    if(freelist_array[free_index].prev_index == NON_EXISTANT) {
-        freelist_array[free_next].prev_index = NON_EXISTANT;
-        slab->freelist_start_index = free_next;
-    } else {
-        freelist_array[free_prev].next_index = free_next;
-        freelist_array[free_next].prev_index = free_prev;
-    }
-
-    // Append the node in the end of the list.
-    freelist_array[slab->freelist_end_index].next_index = free_index;
-    freelist_array[free_index].prev_index = slab->freelist_end_index;
-    slab->freelist_end_index = free_index;
-    freelist_array[free_index].next_index = NON_EXISTANT;
-
-}
-
 void* mem_slab_alloc(struct mem_slab* slab) {
     // Basic sanity checks
     assert(slab != NULL);
@@ -283,32 +340,6 @@ void* mem_slab_alloc(struct mem_slab* slab) {
     assert(is_ptr_in_page(slab, to_return));
 
     return to_return;
-}
-
-static void move_slot_to_start(struct mem_slab* slab, int slot_index) {
-    struct slab_bufctl* freelist_array = (struct slab_bufctl*)(slab->freelist_buffer);
-    uint16_t next_index = freelist_array[slot_index].next_index;
-    uint16_t prev_index = freelist_array[slot_index].prev_index;
-
-    // Remove the node from the list
-    if(next_index == NON_EXISTANT) {
-        freelist_array[prev_index].next_index = NON_EXISTANT;
-    } else {
-        freelist_array[prev_index].next_index = next_index;
-        freelist_array[next_index].prev_index = prev_index;
-    }
-
-    // If the slot is at the end we need to move the end index to the before one.
-    if(slab->freelist_end_index == slot_index) {
-        slab->freelist_end_index = prev_index;
-    }
-
-    // Append the node to the start of the list and update the index to the first node
-    freelist_array[slot_index].next_index = slab->freelist_start_index;
-    freelist_array[slot_index].prev_index = NON_EXISTANT;
-    freelist_array[slab->freelist_start_index].prev_index = slot_index;
-    slab->freelist_start_index = slot_index;
-
 }
 
 // TODO: fill with non allocated pattern 
