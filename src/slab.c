@@ -51,12 +51,22 @@ static inline uint16_t get_buffer_index_from_ptr(struct mem_slab* slab, void* pt
     return ((uintptr_t)ptr - (uintptr_t)slab->allocable_buffer) / (slab->size);
 }
 
-void unitest_slab_h() {
-    // Move slab to end
-    {
+/*
+ * Returns the size of the slab list. Only for debugging purposes.
+ */
+MAYBE_UNUSED static int get_list_size(struct mem_slab* list_start) {
+    struct mem_slab* current = list_start;
+    int jumps = 0;
 
+    while(current != NULL) {
+        fflush(stdout);
+        jumps++;
+        current = current->next;
     }
+
+    return jumps;
 }
+
 
 /*
  * Returns the size of the slab list. Should only be used when debugging is enabled
@@ -73,6 +83,28 @@ MAYBE_UNUSED static size_t get_freelist_size(struct mem_slab* slab) {
     }
     
     return count;
+}
+
+void unitest_slab_h() {
+    // Create several
+    {
+        struct mem_slab* several = mem_slab_create_several(5, 0, 7, NULL);
+        size_t several_list_size = get_list_size(several);
+        if(several_list_size == 7) {
+            printf("\t· mem_slab_create_several no append: PASSED\n");
+        } else {
+            printf("\t· mem_slab_create_several no append: FAILED\n");
+        }
+
+        struct mem_slab* several2 = mem_slab_create_several (5, 0, 3, several);
+        size_t several2_list_size = get_list_size(several2);
+        if(several2_list_size == 10) {
+            printf("\t· mem_slab_create_several appending: PASSED\n");
+        } else {
+            printf("\t· mem_slab_create_several appending: FAILED\n");
+        }
+
+    }
 }
 
 /*
