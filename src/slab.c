@@ -42,6 +42,10 @@ static void move_slot_to_end(struct mem_slab* slab, int free_index) {
     int free_next = freelist_array[free_index].next_index;
     int free_prev = freelist_array[free_index].prev_index;
 
+    if(slab->freelist_end_index == free_index) {
+        return;
+    }
+
     // Remove the node from the list. If it's the first one, then update the freelist_start_index
     // so that the freelist doesn't get destroyed.
     if(freelist_array[free_index].prev_index == NON_EXISTANT) {
@@ -65,6 +69,10 @@ static void move_slot_to_start(struct mem_slab* slab, int slot_index) {
     uint16_t next_index = freelist_array[slot_index].next_index;
     uint16_t prev_index = freelist_array[slot_index].prev_index;
 
+    if(slab->freelist_start_index == slot_index) {
+        return;
+    }
+
     // Remove the node from the list
     if(next_index == NON_EXISTANT) {
         freelist_array[prev_index].next_index = NON_EXISTANT;
@@ -83,7 +91,6 @@ static void move_slot_to_start(struct mem_slab* slab, int slot_index) {
     freelist_array[slot_index].prev_index = NON_EXISTANT;
     freelist_array[slab->freelist_start_index].prev_index = slot_index;
     slab->freelist_start_index = slot_index;
-
 }
 
 /*
@@ -162,17 +169,19 @@ void unitest_slab_h() {
         if(list_size_start == slab->max_refs) {
             printf("\t· mem_slab_create initial list size: PASSED\n");
         } else {
-            printf("\t· mem_slab_create initial list size: FAILED\n");
+            printf("\t· mem_slab_create initial list size: FAILED -> measured = %d, theoretical = %d\n", list_size_start, slab->max_refs);
         }
 
         move_slot_to_end(slab, slab->freelist_start_index);
         int list_size_after = get_freelist_size(slab);
 
         if(list_size_start == list_size_after) {
-            printf("\t· mem_slab_create move first to end: PASSED\n");
+            printf("\t· move_slot_to_end first to end:     PASSED\n");
         } else {
-            printf("\t· mem_slab_create move first to end: FAILED\n");
+            printf("\t· move_slot_to_end first to end:     FAILED\n");
         }
+
+        mem_slab_free(slab);
     }
 
     // Move last slot to end
@@ -184,9 +193,26 @@ void unitest_slab_h() {
         int list_size_after = get_freelist_size(slab);
     
         if(list_size_start == list_size_after) {
-            printf("\t· mem_slab_create move last to end: PASSED\n");
+            printf("\t· move_slot_to_end move last to end: PASSED\n");
         } else {
-            printf("\t· mem_slab_create move last to end: FAILED\n");
+            printf("\t· move_slot_to_end move last to end: FAILED\n");
+        }
+
+        mem_slab_free(slab);
+    }
+
+    // Move first to start
+    {
+        struct mem_slab* slab = mem_slab_create(7, 0);
+        int list_size_start = get_freelist_size(slab);
+
+        move_slot_to_start(slab, slab->freelist_start_index);
+        int list_size_after = get_freelist_size(slab);
+
+        if(list_size_start == list_size_after) {
+            printf("\t· mem_slab_create move last to end:  PASSED\n");
+        } else {
+            printf("\t· mem_slab_create move last to end:  FAILED\n");
         }
     }
 }
