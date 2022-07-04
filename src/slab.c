@@ -123,7 +123,6 @@ MAYBE_UNUSED static int get_list_size(struct mem_slab* list_start) {
     return jumps;
 }
 
-
 /*
  * Returns the size of the slab list. Should only be used when debugging is enabled
  * as traversing the slows down things.

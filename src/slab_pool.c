@@ -15,13 +15,6 @@
 #define POOL_PAGE_SIZE sysconf(_SC_PAGESIZE)
 
 
-void unitest_slab_pool_h() {
-    // Move slab to end
-    {
-
-    }
-}
-
 /*
  * Returns the size of the slab list. Only for debugging purposes.
  */
@@ -98,6 +91,39 @@ static void move_slab_to_start_of_the_list(struct slab_pool* pool, struct mem_sl
     slab->prev = NULL;
     list_start->prev = slab;
     pool->list_start = slab;
+}
+
+
+void unitest_slab_pool_h() {
+    // Move slab to end
+    {
+        struct slab_pool pool = slab_pool_create(10);
+        int initial_size = get_list_size(pool.list_start);
+
+        move_slab_to_end_of_the_list(&pool, pool.list_start);
+        int after_size = get_list_size(pool.list_start);
+
+        if(initial_size == after_size) {
+            printf("\t· move_slab_to_end first slab: PASSED\n");
+        } else {
+            printf("\t· move_slab_to_end first slab: FAILED -> list malformed\n");
+        }
+    }
+
+    // Move slab to end
+    {
+        struct slab_pool pool = slab_pool_create(10);
+        int initial_size = get_list_size(pool.list_start);
+
+        move_slab_to_end_of_the_list(&pool, pool.list_end);
+        int after_size = get_list_size(pool.list_start);
+
+        if(initial_size == after_size) {
+            printf("\t· move_slab_to_end last slab: PASSED\n");
+        } else {
+            printf("\t· move_slab_to_end last slab: FAILED -> list malformed\n");
+        }
+    }
 }
 
 struct slab_pool slab_pool_create(size_t allocation_size) {
