@@ -51,6 +51,13 @@ static inline uint16_t get_buffer_index_from_ptr(struct mem_slab* slab, void* pt
     return ((uintptr_t)ptr - (uintptr_t)slab->allocable_buffer) / (slab->size);
 }
 
+void unitest_slab_h() {
+    // Move slab to end
+    {
+
+    }
+}
+
 /*
  * Returns the size of the slab list. Should only be used when debugging is enabled
  * as traversing the slows down things.

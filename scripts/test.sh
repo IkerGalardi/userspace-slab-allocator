@@ -30,7 +30,14 @@ gcc tests/smalloc_test.c  -o bin/smalloc_test $FLAGS || exit
 echo "[+] Building 'srealloc' test"
 gcc tests/srealloc_test.c  -o bin/srealloc_test $FLAGS || exit
 
+echo "[+] Building unitests"
+gcc tests/unittest.c  -o bin/unitest $FLAGS || exit
+
 mkdir -p tests/logs
+
+echo
+echo "[+] Executing unit tests"
+./bin/unitest || exit
 
 echo
 echo "[+] Testing 'slab'"
