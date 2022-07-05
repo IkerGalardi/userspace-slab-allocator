@@ -170,15 +170,11 @@ void slab_pool_deallocate(struct slab_pool* pool, void* ptr) {
     
     mem_slab_dealloc(slab, ptr);
     
-    // If the slab was full before deallocating the pointer we need to move it
-    // to the start of the list. This way, we can maintain free slabs first in order
-    // to speedup allocations. No need to check if the slab needs to be freed as
-    // its imposible it has 0 allocations in it.
-    if(was_slab_full && slab != pool->list_start) {
-        move_slab_to_start_of_the_list(pool, slab);
-        return;
-    }
-                                                                                            
+    // NOTE: tried to remove some ordering operations by looking at the previous slab in the list
+    //       and moving if the previous was full. That did not maintain the order we wanted and the
+    //       allocator started eating RAM like chrome. Please don't try that again.
+    move_slab_to_start_of_the_list(pool, slab);
+
     // Ask hour super good heuristic if we need to nuke the slab from the list.
     bool heuristic_decision = heuristic_decision_does_free_slab(pool->params, pool->data);
     bool is_empty = slab->ref_count == 0;
