@@ -180,7 +180,6 @@ void slab_pool_deallocate(struct slab_pool* pool, void* ptr) {
     bool is_empty = slab->ref_count == 0;
     bool is_lonely = slab->next == NULL && slab->prev == NULL;
     if(is_empty && !is_lonely && heuristic_decision) {
-	//printf("DELETING PAGE\n");
         struct mem_slab* prev = slab->prev;
         struct mem_slab* next = slab->next;
         if(prev == NULL) {

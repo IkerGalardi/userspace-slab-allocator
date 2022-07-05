@@ -194,7 +194,6 @@ void* mem_slab_alloc(struct mem_slab* slab) {
     // If the first node of the freelist is not free then all the buffers have
     // been allocated.
     if(freelist_array[free_index].is_free != SLOT_FREE) {
-        printf("SLAB WITH NOT ENOUGH SPACE"); fflush(stdout);
         return NULL;
     }
 
