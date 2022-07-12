@@ -3,17 +3,17 @@ library(ggplot2)
 
 a2b20 = data.frame(
   name=c("glibc alloc", "glibc free", "slab alloc", "slab free"),
-  value=c(73762004, 105279871, 48850355, 53842230)
+  value=c(72873162, 103571327, 50730320, 52936917)
 )
 
 a10b10 = data.frame(
   name=c("glibc alloc", "glibc free", "slab alloc", "slab free"),
-  value=c(80618721, 100255538, 85237269, 100701580)
+  value=c(79901282, 99504954, 86121991, 100169212)
 )
 
 a20b2 = data.frame(
   name=c("glibc alloc", "glibc free", "slab alloc", "slab free"),
-  value=c(63419295, 104708128, 64289456, 106009778)
+  value=c(62541873, 104819043, 65699973, 107080553)
 )
 
 p1 = ggplot(a2b20, aes(x=name, y=value)) + 
@@ -49,17 +49,17 @@ save_plot(sizedistrfile, p4, ncol=2, nrow=2, base_asp=1.1, device=cairo_pdf)
 
 d20 = data.frame(
   name=c("glibc alloc", "glibc free", "slab alloc", "slab free"),
-  value=c(1353739496, 1302657973, 1296069239, 1811195904)
+  value=c(1686355545, 1089208619, 4706860645, 1864357995)
 )
 
 d200 = data.frame(
   name=c("glibc alloc", "glibc free", "slab alloc", "slab free"),
-  value=c(1562964912, 1372038624, 2205603636, 4090888374)
+  value=c(1685756779, 1107479466, 6596187449, 1950222742)
 )
 
 d2000 = data.frame(
   name=c("glibc alloc", "glibc free", "slab alloc", "slab free"),
-  value=c(1459956050, 1299646708, 1324878552, 1819149237)
+  value=c(1695083546, 1144882002, 6636479421, 1975314440)
 )
 
 p5 = ggplot(d20, aes(x=name, y=value)) + 
@@ -93,7 +93,7 @@ save_plot(randompatternfname, p8, ncol=2, nrow=2, base_asp=1.1, device=cairo_pdf
 
 cfrac = data.frame(
   name=c("glibc alloctor", "slab allocator"),
-  value=c(1.098, 1.097)
+  value=c(1.099, 1.096)
 )
 
 p9 = ggplot(cfrac, aes(x=name, y=value)) + 
@@ -105,3 +105,28 @@ p9 = ggplot(cfrac, aes(x=name, y=value)) +
   theme(plot.title = element_text(hjust = 0.5))
 cfracfname = "cfrac.pdf"
 save_plot(cfracfname, p9, ncol=2, nrow=2, base_asp=1.1, device=cairo_pdf)
+
+distancevol = data.frame(
+  x =       c(        20,        200,       2000,      20000,      200000,     2000000),
+  alloc =   c(4028085636, 7501593222, 8354511011, 8512508232,  8510238906,  8816088437),
+  dealloc = c(1827426859, 1932027530, 2703255631, 5264387499, 12315686735, 17798934838)
+)
+
+p10 = ggplot(distancevol, aes(x=x, y=alloc)) + 
+  geom_line(colour="#7b9ac7") +
+  ggtitle("Distance evolution (allocations)") +
+  xlab("Average distance") +
+  ylab("Time (ns)") +
+  theme_classic() + 
+  theme(plot.title = element_text(hjust = 0.5))
+
+p11 = ggplot(distancevol, aes(x=x, y=dealloc)) + 
+  geom_line(colour="#7b9ac7") +
+  ggtitle("Distance evolution (allocations)") +
+  xlab("Average distance") +
+  ylab("Time (ns)") +
+  theme_classic() + 
+  theme(plot.title = element_text(hjust = 0.5))
+
+p12 = plot_grid(p10, p11, labels=c("", ""), ncol=2, nrow=1)
+save_plot("distancevol.pdf", p12, ncol=2, nrow=1, base_asp=1.1, device=cairo_pdf)
