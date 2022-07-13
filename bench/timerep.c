@@ -21,6 +21,8 @@ float fork_wait_and_return_time(char** argv) {
         // Redirect stdout to /dev/null
         close(1);
         open("/dev/null", O_WRONLY);
+        close(2);
+        open("/dev/null", O_WRONLY);
 
         execvp(child_argv[0], child_argv);
         exit(1);
