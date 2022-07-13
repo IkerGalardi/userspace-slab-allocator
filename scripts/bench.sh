@@ -215,7 +215,7 @@ nice -n -20 ./bin/randomalloc_synthetic_smalloc -d 20000 >> bench_d20000_smalloc
 echo
 echo "CFRAC"
 echo "  · glibc allocator"
-./bin/timerep nice -n -20 ./bin/cfrac_sys 4175764634412383261319054216609912102 || exit
+./bin/timerep nice -n -20 ./bin/cfrac_sys 4175764634412383261319054216609912102 > bench_cfrac_sys.csv || exit
 
 echo "  · slabed allocator"
-./bin/timerep nice -n -20 ./bin/cfrac_smalloc 4175764634412383261319054216609912102 || exit
+./bin/timerep nice -n -20 ./bin/cfrac_smalloc 4175764634412383261319054216609912102 bench_crac_sys.csv|| exit
