@@ -169,6 +169,8 @@ int main(int argc, char** argv) {
         }
     }
 
-    printf("Allocation time: %lu\n", allocation_time);
-    printf("Dellocation time: %lu\n", deallocation_time);
+
+    double time_per_allocation = (double)allocation_time / (double)operation_count;
+    double time_per_deallocation = (double)deallocation_time / (double)operation_count;
+    printf("%f,%f\n", time_per_allocation, time_per_deallocation);
 }
