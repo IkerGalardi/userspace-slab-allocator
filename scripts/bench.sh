@@ -26,22 +26,83 @@ cd ../..
 echo "[+] Executing benchmarks"
 echo "RANDOM SIZE, FIFO FREE, SYNTHETIC"
 echo "  · glibc allocator a = 2, b = 20"
-nice -n -20 ./bin/randomsize_fifo_synthetic -a 2 -b 20 || exit
+echo "allocations,deallocations" > bench_a2b20_sys.csv
+nice -n -20 ./bin/randomsize_fifo_synthetic -a 2 -b 20 >> bench_a2b20_sys.csv || exit
+nice -n -20 ./bin/randomsize_fifo_synthetic -a 2 -b 20 >> bench_a2b20_sys.csv || exit
+nice -n -20 ./bin/randomsize_fifo_synthetic -a 2 -b 20 >> bench_a2b20_sys.csv || exit
+nice -n -20 ./bin/randomsize_fifo_synthetic -a 2 -b 20 >> bench_a2b20_sys.csv || exit
+nice -n -20 ./bin/randomsize_fifo_synthetic -a 2 -b 20 >> bench_a2b20_sys.csv || exit
+nice -n -20 ./bin/randomsize_fifo_synthetic -a 2 -b 20 >> bench_a2b20_sys.csv || exit
+nice -n -20 ./bin/randomsize_fifo_synthetic -a 2 -b 20 >> bench_a2b20_sys.csv || exit
+nice -n -20 ./bin/randomsize_fifo_synthetic -a 2 -b 20 >> bench_a2b20_sys.csv || exit
+nice -n -20 ./bin/randomsize_fifo_synthetic -a 2 -b 20 >> bench_a2b20_sys.csv || exit
+nice -n -20 ./bin/randomsize_fifo_synthetic -a 2 -b 20 >> bench_a2b20_sys.csv || exit
 
 echo "  · glibc allocator a = 10, b = 10"
-nice -n -20 ./bin/randomsize_fifo_synthetic -a 10 -b 10 || exit
+echo "allocations,deallocations" > bench_a10b10_sys.csv
+nice -n -20 ./bin/randomsize_fifo_synthetic -a 10 -b 10 >> bench_a10b10_sys.csv || exit
+nice -n -20 ./bin/randomsize_fifo_synthetic -a 10 -b 10 >> bench_a10b10_sys.csv || exit
+nice -n -20 ./bin/randomsize_fifo_synthetic -a 10 -b 10 >> bench_a10b10_sys.csv || exit
+nice -n -20 ./bin/randomsize_fifo_synthetic -a 10 -b 10 >> bench_a10b10_sys.csv || exit
+nice -n -20 ./bin/randomsize_fifo_synthetic -a 10 -b 10 >> bench_a10b10_sys.csv || exit
+nice -n -20 ./bin/randomsize_fifo_synthetic -a 10 -b 10 >> bench_a10b10_sys.csv || exit
+nice -n -20 ./bin/randomsize_fifo_synthetic -a 10 -b 10 >> bench_a10b10_sys.csv || exit
+nice -n -20 ./bin/randomsize_fifo_synthetic -a 10 -b 10 >> bench_a10b10_sys.csv || exit
+nice -n -20 ./bin/randomsize_fifo_synthetic -a 10 -b 10 >> bench_a10b10_sys.csv || exit
+nice -n -20 ./bin/randomsize_fifo_synthetic -a 10 -b 10 >> bench_a10b10_sys.csv || exit
 
 echo "  · glibc allocator a = 20, b = 2"
-nice -n -20 ./bin/randomsize_fifo_synthetic -a 20 -b 2 || exit
+echo "allocations,deallocations" > bench_a20b2_sys.csv
+nice -n -20 ./bin/randomsize_fifo_synthetic -a 20 -b 2 >> bench_a20b2_sys.csv || exit
+nice -n -20 ./bin/randomsize_fifo_synthetic -a 20 -b 2 >> bench_a20b2_sys.csv || exit
+nice -n -20 ./bin/randomsize_fifo_synthetic -a 20 -b 2 >> bench_a20b2_sys.csv || exit
+nice -n -20 ./bin/randomsize_fifo_synthetic -a 20 -b 2 >> bench_a20b2_sys.csv || exit
+nice -n -20 ./bin/randomsize_fifo_synthetic -a 20 -b 2 >> bench_a20b2_sys.csv || exit
+nice -n -20 ./bin/randomsize_fifo_synthetic -a 20 -b 2 >> bench_a20b2_sys.csv || exit
+nice -n -20 ./bin/randomsize_fifo_synthetic -a 20 -b 2 >> bench_a20b2_sys.csv || exit
+nice -n -20 ./bin/randomsize_fifo_synthetic -a 20 -b 2 >> bench_a20b2_sys.csv || exit
+nice -n -20 ./bin/randomsize_fifo_synthetic -a 20 -b 2 >> bench_a20b2_sys.csv || exit
+nice -n -20 ./bin/randomsize_fifo_synthetic -a 20 -b 2 >> bench_a20b2_sys.csv || exit
+nice -n -20 ./bin/randomsize_fifo_synthetic -a 20 -b 2 >> bench_a20b2_sys.csv || exit
 
 echo "  · slab allocator a = 2, b = 20"
-nice -n -20 ./bin/randomsize_fifo_synthetic_smalloc -a 2 -b 20 || exit
+echo "allocations,deallocations" > bench_a2b20_smalloc.csv
+nice -n -20 ./bin/randomsize_fifo_synthetic_smalloc -a 2 -b 20 >> bench_a2b20_smalloc.csv || exit
+nice -n -20 ./bin/randomsize_fifo_synthetic_smalloc -a 2 -b 20 >> bench_a2b20_smalloc.csv || exit
+nice -n -20 ./bin/randomsize_fifo_synthetic_smalloc -a 2 -b 20 >> bench_a2b20_smalloc.csv || exit
+nice -n -20 ./bin/randomsize_fifo_synthetic_smalloc -a 2 -b 20 >> bench_a2b20_smalloc.csv || exit
+nice -n -20 ./bin/randomsize_fifo_synthetic_smalloc -a 2 -b 20 >> bench_a2b20_smalloc.csv || exit
+nice -n -20 ./bin/randomsize_fifo_synthetic_smalloc -a 2 -b 20 >> bench_a2b20_smalloc.csv || exit
+nice -n -20 ./bin/randomsize_fifo_synthetic_smalloc -a 2 -b 20 >> bench_a2b20_smalloc.csv || exit
+nice -n -20 ./bin/randomsize_fifo_synthetic_smalloc -a 2 -b 20 >> bench_a2b20_smalloc.csv || exit
+nice -n -20 ./bin/randomsize_fifo_synthetic_smalloc -a 2 -b 20 >> bench_a2b20_smalloc.csv || exit
+nice -n -20 ./bin/randomsize_fifo_synthetic_smalloc -a 2 -b 20 >> bench_a2b20_smalloc.csv || exit
 
 echo "  · slab allocator a = 10, b = 10"
-nice -n -20 ./bin/randomsize_fifo_synthetic_smalloc -a 10 -b 10 || exit
+echo "allocations,deallocations" > bench_a10b10_smalloc.csv
+nice -n -20 ./bin/randomsize_fifo_synthetic_smalloc -a 10 -b 10 >> bench_a10b10_smalloc.csv || exit
+nice -n -20 ./bin/randomsize_fifo_synthetic_smalloc -a 10 -b 10 >> bench_a10b10_smalloc.csv || exit
+nice -n -20 ./bin/randomsize_fifo_synthetic_smalloc -a 10 -b 10 >> bench_a10b10_smalloc.csv || exit
+nice -n -20 ./bin/randomsize_fifo_synthetic_smalloc -a 10 -b 10 >> bench_a10b10_smalloc.csv || exit
+nice -n -20 ./bin/randomsize_fifo_synthetic_smalloc -a 10 -b 10 >> bench_a10b10_smalloc.csv || exit
+nice -n -20 ./bin/randomsize_fifo_synthetic_smalloc -a 10 -b 10 >> bench_a10b10_smalloc.csv || exit
+nice -n -20 ./bin/randomsize_fifo_synthetic_smalloc -a 10 -b 10 >> bench_a10b10_smalloc.csv || exit
+nice -n -20 ./bin/randomsize_fifo_synthetic_smalloc -a 10 -b 10 >> bench_a10b10_smalloc.csv || exit
+nice -n -20 ./bin/randomsize_fifo_synthetic_smalloc -a 10 -b 10 >> bench_a10b10_smalloc.csv || exit
+nice -n -20 ./bin/randomsize_fifo_synthetic_smalloc -a 10 -b 10 >> bench_a10b10_smalloc.csv || exit
 
 echo "  · slab allocator a = 20, b = 2"
-nice -n -20 ./bin/randomsize_fifo_synthetic_smalloc -a 20 -b 2 || exit
+echo "allocations,deallocations" > bench_a20b2_smalloc.csv
+nice -n -20 ./bin/randomsize_fifo_synthetic_smalloc -a 20 -b 2 >> bench_a20b2_smalloc.csv || exit
+nice -n -20 ./bin/randomsize_fifo_synthetic_smalloc -a 20 -b 2 >> bench_a20b2_smalloc.csv || exit
+nice -n -20 ./bin/randomsize_fifo_synthetic_smalloc -a 20 -b 2 >> bench_a20b2_smalloc.csv || exit
+nice -n -20 ./bin/randomsize_fifo_synthetic_smalloc -a 20 -b 2 >> bench_a20b2_smalloc.csv || exit
+nice -n -20 ./bin/randomsize_fifo_synthetic_smalloc -a 20 -b 2 >> bench_a20b2_smalloc.csv || exit
+nice -n -20 ./bin/randomsize_fifo_synthetic_smalloc -a 20 -b 2 >> bench_a20b2_smalloc.csv || exit
+nice -n -20 ./bin/randomsize_fifo_synthetic_smalloc -a 20 -b 2 >> bench_a20b2_smalloc.csv || exit
+nice -n -20 ./bin/randomsize_fifo_synthetic_smalloc -a 20 -b 2 >> bench_a20b2_smalloc.csv || exit
+nice -n -20 ./bin/randomsize_fifo_synthetic_smalloc -a 20 -b 2 >> bench_a20b2_smalloc.csv || exit
+nice -n -20 ./bin/randomsize_fifo_synthetic_smalloc -a 20 -b 2 >> bench_a20b2_smalloc.csv || exit
 
 
 echo "RANDOM PATTERN SYNTHETIC"
