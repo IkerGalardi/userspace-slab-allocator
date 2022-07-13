@@ -107,22 +107,108 @@ nice -n -20 ./bin/randomsize_fifo_synthetic_smalloc -a 20 -b 2 >> bench_a20b2_sm
 
 echo "RANDOM PATTERN SYNTHETIC"
 echo "  · glibc allocator d = 20"
-nice -n -20 ./bin/randomalloc_synthetic -d 20 || exit
+echo "allocations,deallocations" > bench_d20_sys.csv
+nice -n -20 ./bin/randomalloc_synthetic -d 20 >> bench_d20_sys.csv|| exit
+nice -n -20 ./bin/randomalloc_synthetic -d 20 >> bench_d20_sys.csv|| exit
+nice -n -20 ./bin/randomalloc_synthetic -d 20 >> bench_d20_sys.csv|| exit
+nice -n -20 ./bin/randomalloc_synthetic -d 20 >> bench_d20_sys.csv|| exit
+nice -n -20 ./bin/randomalloc_synthetic -d 20 >> bench_d20_sys.csv|| exit
+nice -n -20 ./bin/randomalloc_synthetic -d 20 >> bench_d20_sys.csv|| exit
+nice -n -20 ./bin/randomalloc_synthetic -d 20 >> bench_d20_sys.csv|| exit
+nice -n -20 ./bin/randomalloc_synthetic -d 20 >> bench_d20_sys.csv|| exit
+nice -n -20 ./bin/randomalloc_synthetic -d 20 >> bench_d20_sys.csv|| exit
+nice -n -20 ./bin/randomalloc_synthetic -d 20 >> bench_d20_sys.csv|| exit
 
 echo "  · glibc allocator d = 200"
-nice -n -20 ./bin/randomalloc_synthetic -d 200 || exit
+echo "allocations,deallocations" > bench_d200_sys.csv
+nice -n -20 ./bin/randomalloc_synthetic -d 200 >> bench_d200_sys.csv || exit
+nice -n -20 ./bin/randomalloc_synthetic -d 200 >> bench_d200_sys.csv || exit
+nice -n -20 ./bin/randomalloc_synthetic -d 200 >> bench_d200_sys.csv || exit
+nice -n -20 ./bin/randomalloc_synthetic -d 200 >> bench_d200_sys.csv || exit
+nice -n -20 ./bin/randomalloc_synthetic -d 200 >> bench_d200_sys.csv || exit
+nice -n -20 ./bin/randomalloc_synthetic -d 200 >> bench_d200_sys.csv || exit
+nice -n -20 ./bin/randomalloc_synthetic -d 200 >> bench_d200_sys.csv || exit
+nice -n -20 ./bin/randomalloc_synthetic -d 200 >> bench_d200_sys.csv || exit
+nice -n -20 ./bin/randomalloc_synthetic -d 200 >> bench_d200_sys.csv || exit
+nice -n -20 ./bin/randomalloc_synthetic -d 200 >> bench_d200_sys.csv || exit
 
 echo "  · glibc allocator d = 2000"
-nice -n -20 ./bin/randomalloc_synthetic -d 2000 || exit
+echo "allocations,deallocations" > bench_d2000_sys.csv
+nice -n -20 ./bin/randomalloc_synthetic -d 2000 >> bench_d2000_sys.csv || exit
+nice -n -20 ./bin/randomalloc_synthetic -d 2000 >> bench_d2000_sys.csv || exit
+nice -n -20 ./bin/randomalloc_synthetic -d 2000 >> bench_d2000_sys.csv || exit
+nice -n -20 ./bin/randomalloc_synthetic -d 2000 >> bench_d2000_sys.csv || exit
+nice -n -20 ./bin/randomalloc_synthetic -d 2000 >> bench_d2000_sys.csv || exit
+nice -n -20 ./bin/randomalloc_synthetic -d 2000 >> bench_d2000_sys.csv || exit
+nice -n -20 ./bin/randomalloc_synthetic -d 2000 >> bench_d2000_sys.csv || exit
+nice -n -20 ./bin/randomalloc_synthetic -d 2000 >> bench_d2000_sys.csv || exit
+nice -n -20 ./bin/randomalloc_synthetic -d 2000 >> bench_d2000_sys.csv || exit
+nice -n -20 ./bin/randomalloc_synthetic -d 2000 >> bench_d2000_sys.csv || exit
+
+echo "  · glibc allocator d = 20000"
+echo "allocations,deallocations" > bench_d20000_sys.csv
+nice -n -20 ./bin/randomalloc_synthetic -d 20000 >> bench_d20000_sys.csv || exit
+nice -n -20 ./bin/randomalloc_synthetic -d 20000 >> bench_d20000_sys.csv || exit
+nice -n -20 ./bin/randomalloc_synthetic -d 20000 >> bench_d20000_sys.csv || exit
+nice -n -20 ./bin/randomalloc_synthetic -d 20000 >> bench_d20000_sys.csv || exit
+nice -n -20 ./bin/randomalloc_synthetic -d 20000 >> bench_d20000_sys.csv || exit
+nice -n -20 ./bin/randomalloc_synthetic -d 20000 >> bench_d20000_sys.csv || exit
+nice -n -20 ./bin/randomalloc_synthetic -d 20000 >> bench_d20000_sys.csv || exit
+nice -n -20 ./bin/randomalloc_synthetic -d 20000 >> bench_d20000_sys.csv || exit
+nice -n -20 ./bin/randomalloc_synthetic -d 20000 >> bench_d20000_sys.csv || exit
+nice -n -20 ./bin/randomalloc_synthetic -d 20000 >> bench_d20000_sys.csv || exit
 
 echo "  · slab allocator d = 20"
-nice -n -20 ./bin/randomalloc_synthetic_smalloc -d 20 || exit
+echo "allocations,deallocations" > bench_d20_smalloc.csv
+nice -n -20 ./bin/randomalloc_synthetic_smalloc -d 20 >> bench_d20_smalloc.csv|| exit
+nice -n -20 ./bin/randomalloc_synthetic_smalloc -d 20 >> bench_d20_smalloc.csv|| exit
+nice -n -20 ./bin/randomalloc_synthetic_smalloc -d 20 >> bench_d20_smalloc.csv|| exit
+nice -n -20 ./bin/randomalloc_synthetic_smalloc -d 20 >> bench_d20_smalloc.csv|| exit
+nice -n -20 ./bin/randomalloc_synthetic_smalloc -d 20 >> bench_d20_smalloc.csv|| exit
+nice -n -20 ./bin/randomalloc_synthetic_smalloc -d 20 >> bench_d20_smalloc.csv|| exit
+nice -n -20 ./bin/randomalloc_synthetic_smalloc -d 20 >> bench_d20_smalloc.csv|| exit
+nice -n -20 ./bin/randomalloc_synthetic_smalloc -d 20 >> bench_d20_smalloc.csv|| exit
+nice -n -20 ./bin/randomalloc_synthetic_smalloc -d 20 >> bench_d20_smalloc.csv|| exit
+nice -n -20 ./bin/randomalloc_synthetic_smalloc -d 20 >> bench_d20_smalloc.csv|| exit
 
 echo "  · slab allocator d = 200"
-nice -n -20 ./bin/randomalloc_synthetic_smalloc -d 200 || exit
+echo "allocations,deallocations" > bench_d200_smalloc.csv
+nice -n -20 ./bin/randomalloc_synthetic_smalloc -d 200 >> bench_d200_smalloc.csv|| exit
+nice -n -20 ./bin/randomalloc_synthetic_smalloc -d 200 >> bench_d200_smalloc.csv|| exit
+nice -n -20 ./bin/randomalloc_synthetic_smalloc -d 200 >> bench_d200_smalloc.csv|| exit
+nice -n -20 ./bin/randomalloc_synthetic_smalloc -d 200 >> bench_d200_smalloc.csv|| exit
+nice -n -20 ./bin/randomalloc_synthetic_smalloc -d 200 >> bench_d200_smalloc.csv|| exit
+nice -n -20 ./bin/randomalloc_synthetic_smalloc -d 200 >> bench_d200_smalloc.csv|| exit
+nice -n -20 ./bin/randomalloc_synthetic_smalloc -d 200 >> bench_d200_smalloc.csv|| exit
+nice -n -20 ./bin/randomalloc_synthetic_smalloc -d 200 >> bench_d200_smalloc.csv|| exit
+nice -n -20 ./bin/randomalloc_synthetic_smalloc -d 200 >> bench_d200_smalloc.csv|| exit
+nice -n -20 ./bin/randomalloc_synthetic_smalloc -d 200 >> bench_d200_smalloc.csv|| exit
 
 echo "  · slab allocator d = 2000"
-nice -n -20 ./bin/randomalloc_synthetic_smalloc -d 2000 || exit
+echo "allocations,deallocations" > bench_d2000_smalloc.csv
+nice -n -20 ./bin/randomalloc_synthetic_smalloc -d 2000 >> bench_d2000_smalloc.csv|| exit
+nice -n -20 ./bin/randomalloc_synthetic_smalloc -d 2000 >> bench_d2000_smalloc.csv|| exit
+nice -n -20 ./bin/randomalloc_synthetic_smalloc -d 2000 >> bench_d2000_smalloc.csv|| exit
+nice -n -20 ./bin/randomalloc_synthetic_smalloc -d 2000 >> bench_d2000_smalloc.csv|| exit
+nice -n -20 ./bin/randomalloc_synthetic_smalloc -d 2000 >> bench_d2000_smalloc.csv|| exit
+nice -n -20 ./bin/randomalloc_synthetic_smalloc -d 2000 >> bench_d2000_smalloc.csv|| exit
+nice -n -20 ./bin/randomalloc_synthetic_smalloc -d 2000 >> bench_d2000_smalloc.csv|| exit
+nice -n -20 ./bin/randomalloc_synthetic_smalloc -d 2000 >> bench_d2000_smalloc.csv|| exit
+nice -n -20 ./bin/randomalloc_synthetic_smalloc -d 2000 >> bench_d2000_smalloc.csv|| exit
+nice -n -20 ./bin/randomalloc_synthetic_smalloc -d 2000 >> bench_d2000_smalloc.csv|| exit
+
+echo "  · slab allocator d = 20000"
+echo "allocations,deallocations" > bench_d20000_smalloc.csv
+nice -n -20 ./bin/randomalloc_synthetic_smalloc -d 20000 >> bench_d20000_smalloc.csv|| exit
+nice -n -20 ./bin/randomalloc_synthetic_smalloc -d 20000 >> bench_d20000_smalloc.csv|| exit
+nice -n -20 ./bin/randomalloc_synthetic_smalloc -d 20000 >> bench_d20000_smalloc.csv|| exit
+nice -n -20 ./bin/randomalloc_synthetic_smalloc -d 20000 >> bench_d20000_smalloc.csv|| exit
+nice -n -20 ./bin/randomalloc_synthetic_smalloc -d 20000 >> bench_d20000_smalloc.csv|| exit
+nice -n -20 ./bin/randomalloc_synthetic_smalloc -d 20000 >> bench_d20000_smalloc.csv|| exit
+nice -n -20 ./bin/randomalloc_synthetic_smalloc -d 20000 >> bench_d20000_smalloc.csv|| exit
+nice -n -20 ./bin/randomalloc_synthetic_smalloc -d 20000 >> bench_d20000_smalloc.csv|| exit
+nice -n -20 ./bin/randomalloc_synthetic_smalloc -d 20000 >> bench_d20000_smalloc.csv|| exit
+nice -n -20 ./bin/randomalloc_synthetic_smalloc -d 20000 >> bench_d20000_smalloc.csv|| exit
 
 echo
 echo "CFRAC"
