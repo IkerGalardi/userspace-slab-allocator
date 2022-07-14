@@ -218,4 +218,4 @@ echo "  · glibc allocator"
 ./bin/timerep nice -n -20 ./bin/cfrac_sys 4175764634412383261319054216609912102 > bench_cfrac_sys.csv || exit
 
 echo "  · slabed allocator"
-./bin/timerep nice -n -20 ./bin/cfrac_smalloc 4175764634412383261319054216609912102 bench_crac_sys.csv|| exit
+./bin/timerep nice -n -20 ./bin/cfrac_smalloc 4175764634412383261319054216609912102 > bench_cfrac_smalloc.csv || exit
