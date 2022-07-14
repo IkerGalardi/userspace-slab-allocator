@@ -101,6 +101,6 @@ int main(int argc, char** argv) {
     }
 
     double time_per_allocation = (double)time_allocating_ns /   (double)(ITERATION_COUNT + ALLOCATION_COUNT);
-    double time_per_deallocation = (double)time_allocating_ns / (double)(ITERATION_COUNT + ALLOCATION_COUNT);
+    double time_per_deallocation = (double)time_deallocating_ns / (double)(ITERATION_COUNT + ALLOCATION_COUNT);
     printf("%f,%f\n", time_per_allocation, time_per_deallocation);
 }
