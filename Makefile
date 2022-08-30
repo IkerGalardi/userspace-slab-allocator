@@ -8,7 +8,6 @@ LIBRARY_NAME=libslaballocator
 OBJECT_FILES=bin/slab_pool.o \
              bin/slab.o \
              bin/smalloc.o \
-             bin/utils.o \
              bin/heuristic.o
 
 all: static

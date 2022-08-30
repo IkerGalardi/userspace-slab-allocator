@@ -21,7 +21,7 @@
 #define SLOT_BUSY 1
 
 /*
- * Memory layout of cache page
+ * Memory layout of slab page
  * +-----------+--------+--------+--------+--------+--------+--------+
  * |   HEADER  | BUFCTL | BUFCTL |   ...  |PADDING |  DATA  |  DATA  |
  * +-----------+--------+--------+--------+--------+--------+--------+
@@ -86,7 +86,6 @@ static void prepare_slab_header(struct mem_slab* result, int size, int alignment
     int num_buffers = (SLAB_PAGE_SIZE - sizeof(struct mem_slab))/(size * sizeof(struct slab_bufctl));
 
 
-    // Link all the free list
     // TODO: maybe can avoid linking all the freelist at the start and do it
     //       with each allocation. Investigate that.
     struct slab_bufctl* freelist_buffer = (struct slab_bufctl*)result->freelist_buffer;
@@ -114,12 +113,10 @@ struct mem_slab* mem_slab_create(int size, int alignment) {
     struct mem_slab* result = (struct mem_slab*)mmap(NULL,
                                                      SLAB_PAGE_SIZE,
                                                      PROT_READ | PROT_WRITE,
-                                                     MAP_ANONYMOUS | MAP_PRIVATE,
+                                                     MAP_ANONYMOUS | MAP_PRIVATE | MAP_POPULATE,
                                                      -1,
                                                      0);
     
-    // Linux returns -1 as address when no memory is mapped. If that happens
-    // return NULL and user should take care of that.
     if(result == (void*)-1) {
         return NULL;
     }
@@ -139,13 +136,10 @@ struct mem_slab* mem_slab_create_several(int size, int alignment, int count, str
                                0);
     uint8_t* result_in_bytes = (uint8_t*)mapped_region;
 
-    // Linux returns -1 as address when no memory is mapped. If that happens
-    // return NULL and user should take care of that.
     if(result_in_bytes == (void*)-1) {
         return NULL;
     }
 
-    // Prepare all the mapped pages
     struct mem_slab* first = (struct mem_slab*)mapped_region;
     prepare_slab_header(first, size, alignment);
     first->prev = NULL;
@@ -155,7 +149,6 @@ struct mem_slab* mem_slab_create_several(int size, int alignment, int count, str
         struct mem_slab* current =  (struct mem_slab*)((i+0) * SLAB_PAGE_SIZE + result_in_bytes);
         struct mem_slab* next =     (struct mem_slab*)((i+1) * SLAB_PAGE_SIZE + result_in_bytes);
 
-        // Prepare the header and link the slabs
         prepare_slab_header(current, size, alignment);
         current->prev = previous;
         current->next = next;
@@ -180,7 +173,6 @@ void mem_slab_free(struct mem_slab* slab) {
 }
 
 void* mem_slab_alloc(struct mem_slab* slab) {
-    // Basic sanity checks
     assert(slab != NULL);
     assert(slab->slab_magic == SLAB_MAGIC_NUMBER);
 
@@ -191,20 +183,15 @@ void* mem_slab_alloc(struct mem_slab* slab) {
     struct slab_bufctl* freelist_array = (struct slab_bufctl*)(slab->freelist_buffer);
     int free_index = slab->freelist_start_index;
 
-    // If the first node of the freelist is not free then all the buffers have
-    // been allocated.
     if(freelist_array[free_index].is_free != SLOT_FREE) {
         return NULL;
     }
 
-    // Increment the reference count
     slab->ref_count++;
     
     int free_next = freelist_array[free_index].next_index;
     int free_prev = freelist_array[free_index].prev_index;
 
-    // Remove the node from the list. If it's the first one, then update the freelist_start_index
-    // so that the freelist doesn't get destroyed.
     if(freelist_array[free_index].prev_index == NON_EXISTANT) {
         freelist_array[free_next].prev_index = NON_EXISTANT;
         slab->freelist_start_index = free_next;
@@ -213,13 +200,11 @@ void* mem_slab_alloc(struct mem_slab* slab) {
         freelist_array[free_next].prev_index = free_prev;
     }
 
-    // Append the node in the end of the list.
     freelist_array[slab->freelist_end_index].next_index = free_index;
     freelist_array[free_index].prev_index = slab->freelist_end_index;
     slab->freelist_end_index = free_index;
     freelist_array[free_index].next_index = NON_EXISTANT;
 
-    // Important to mark it as busy.
     freelist_array[free_index].is_free = SLOT_BUSY;
 
     assert(slab->freelist_start_index != NON_EXISTANT);
@@ -238,7 +223,6 @@ void* mem_slab_alloc(struct mem_slab* slab) {
 
 // TODO: fill with non allocated pattern 
 void mem_slab_dealloc(struct mem_slab* slab, void* ptr) {
-    // Basic sanity checks before beginning any work
     assert(slab != NULL);
     assert(slab->slab_magic == SLAB_MAGIC_NUMBER);
     assert(is_ptr_in_page(slab, ptr));
@@ -247,17 +231,14 @@ void mem_slab_dealloc(struct mem_slab* slab, void* ptr) {
     uint16_t slot_index = get_buffer_index_from_ptr(slab, ptr);
     assert(slot_index != NON_EXISTANT);
 
-    // Check for double free
     assert(freelist_array[slot_index].is_free == SLOT_BUSY);
     
-    // Decrement the reference count and mark node as free
     slab->ref_count--;
     freelist_array[slot_index].is_free = SLOT_FREE; 
     
     uint16_t next_index = freelist_array[slot_index].next_index;
     uint16_t prev_index = freelist_array[slot_index].prev_index;
 
-    // The node is already the first in the list so no movement should be done.
     if(slot_index == slab->freelist_start_index) {
         return;
     }
@@ -266,7 +247,6 @@ void mem_slab_dealloc(struct mem_slab* slab, void* ptr) {
         return;
     }
 
-    // Remove the node from the list
     if(next_index == NON_EXISTANT) {
         freelist_array[prev_index].next_index = NON_EXISTANT;
     } else {
@@ -274,12 +254,10 @@ void mem_slab_dealloc(struct mem_slab* slab, void* ptr) {
         freelist_array[next_index].prev_index = prev_index;
     }
 
-    // If the slot is at the end we need to move the end index to the before one.
     if(slab->freelist_end_index == slot_index) {
         slab->freelist_end_index = prev_index;
     }
 
-    // Append the node to the start of the list and update the index to the first node
     freelist_array[slot_index].next_index = slab->freelist_start_index;
     freelist_array[slot_index].prev_index = NON_EXISTANT;
     freelist_array[slab->freelist_start_index].prev_index = slot_index;

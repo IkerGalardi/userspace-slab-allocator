@@ -45,13 +45,10 @@ static void move_slab_to_end_of_the_list(struct slab_pool* pool, struct mem_slab
     struct mem_slab* previous = slab->prev;
     struct mem_slab* next =     slab->next;
 
-    // If the slab is already in the end, we don't need to do anything
     if(next ==  NULL) {
         return;
     }
 
-    // Remove the node from the list. If the node is the first, then update the pointer to
-    // the first node.
     if(previous == NULL) {
         next->prev = NULL;
         pool->list_start = next;
@@ -119,7 +116,6 @@ void* slab_pool_allocate(struct slab_pool* pool) {
     
     pool->data.allocation_count++;
     
-    // If the first slab has space, simply allocate on it and return.
     bool is_first_full = pool->list_start->ref_count == pool->list_start->max_refs;
     if(!is_first_full) {
         void* result = mem_slab_alloc(pool->list_start);
@@ -139,10 +135,7 @@ void* slab_pool_allocate(struct slab_pool* pool) {
         
         return result;
     } 
-    
-    // If the second one is still full, we have no choice but to create more 
-    // slabs. Important to move the full slab to the end in order to maintain 
-    // favorable ordering.
+
     move_slab_to_end_of_the_list(pool, pool->list_start);
     size_t grow_count = heuristic_decision_grow_count(pool->params, pool->data);
     struct mem_slab* new_first = mem_slab_create_several(pool->allocation_size,
@@ -153,7 +146,6 @@ void* slab_pool_allocate(struct slab_pool* pool) {
     
     pool->data.grow_count += grow_count;
     
-    // Allocate in the newly created slab and return.
     void* result = mem_slab_alloc(pool->list_start);
     assert(result != NULL);
     return result;
@@ -175,7 +167,6 @@ void slab_pool_deallocate(struct slab_pool* pool, void* ptr) {
     //       allocator started eating RAM like chrome. Please don't try that again.
     move_slab_to_start_of_the_list(pool, slab);
 
-    // Ask hour super good heuristic if we need to nuke the slab from the list.
     bool heuristic_decision = heuristic_decision_does_free_slab(pool->params, pool->data);
     bool is_empty = slab->ref_count == 0;
     bool is_lonely = slab->next == NULL && slab->prev == NULL;

@@ -26,7 +26,6 @@ __attribute__((constructor)) void smalloc_initialize() {
 void* smalloc(size_t size) {
     assert(size != 0); 
 
-    // Find a suitable cache and try to allocate on it.
     // NOTE: Assumes that the cache configuration sizes are sorted.
     for(int i = 0; i < SMALLOC_CACHE_COUNT; i++) {
         if(size <= pools[i].allocation_size) {
@@ -34,8 +33,6 @@ void* smalloc(size_t size) {
         }
     }
 
-    // If this point is reached, means that no cache is suitable for allocating the
-    // given size.
     return malloc(size);
 }
 
@@ -47,16 +44,13 @@ void* srealloc(void* ptr, size_t size) {
 
     struct mem_slab* slab = get_page_pointer(ptr);
 
-    // If the pointer was not allocated by us, then simply realloc using system's
-    // allocator.
     if(slab->slab_magic != SLAB_MAGIC_NUMBER) {
         return realloc(ptr, size);
     }
 
+    // We don't try to retrieve a smaller buffer as the slab allocated buffers are already
+    // pretty small and the dealloc/alloc operations could slow down things unecessarily.
     size_t allocation_size = slab->size;
-
-    // Our pointers are already small, so there is no need to do reallocations
-    // and we can simply return the provided pointer.
     if(size < allocation_size) {
         return ptr;
     }
